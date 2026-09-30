@@ -8,7 +8,7 @@ looked up live and which are catalogue estimates.
 |---|---|
 | `LIVE` | Distributor page or listing read on 2026-09-30. Stock and price are real numbers from that day |
 | `EST` | Catalogue-typical part and price. Not looked up. Commodity items — resistors, ceramics, TVS, fuses — where the risk is a few cents, not availability |
-| `OPEN` | No part selected. A decision is required |
+| `OPEN` | No part selected. A decision is required — **none remain** |
 
 Thirteen lines were verified live: everything on the critical path, everything expensive,
 and everything that turned out to be wrong.
@@ -106,56 +106,61 @@ BSC0702LS 8,427 · LM5164 13,462.
 
 ---
 
-## 3. OPEN-8 — there is no connector that meets the spec
+## 3. OPEN-8 — RESOLVED
 
-**This is the one thing sourcing could not close, and it needs a decision.**
+**Locking was dropped** (user decision, 2026-09-30). That reduced the requirement from
+"panel-mount, locking, 5.5 × 2.5mm, ≥7A" — which does not exist — to "5.5 × 2.5mm, ≥7A",
+which does.
 
-`params.yaml` asks for a panel-mount 5.5 × 2.5mm barrel jack that is **locking** (M-7,
-added after the live-plug safety discussion) and rated **≥10A**. Searching the tier-1
-catalogues, **that part does not exist.** The closest options each fail on something:
+**Fitted: Kycon KLDHCX-8-0202-B.** 8A, 24VDC, 5.5mm OD / 2.5mm ID, right-angle through
+hole, $1.81 at qty 10, **5,196 in stock at Mouser** and 104 at DigiKey.
 
-| Part | Locking | Panel mount | Rating | Barrel | Fails on |
-|---|---|---|---|---|---|
-| Kycon KLDHCX-8-0202-A | Yes | **No — PCB right-angle** | 8A, 24V | 5.5 × **2.0** | Mount and inner diameter |
-| Kycon KLDHCX-0202-A-LT | Yes | No — PCB | **5A** | 5.5 × 2.5 | Rating and mount |
-| Kycon KLDX-0202-A | Yes | No — PCB | 5A | 5.5 × 2.5 | Rating and mount |
-| Generic panel-mount barrel | **No** | Yes | typically 5A | 5.5 × 2.5 | Rating and locking |
-| Switchcraft panel jacks | No | Yes | 5A | 5.5 × 2.5 | Rating and locking |
+### Why this was hard to find
 
-The pattern is consistent: **the 5.5 × 2.5mm barrel format tops out around 5–8A across the
-whole industry**, because it is a consumer-laptop connector, and the locking variants are
-all designed to be soldered to a board rather than bolted to a panel.
+| Manufacturer | Panel-mount 5.5 × 2.5mm ceiling |
+|---|---|
+| Same Sky (ex-CUI) | **5.0A** across their entire panel-mount line (PJ-005B, PJ-064B, PJ-065B, PJ-066B, PJ-067B, PJ-090BH) |
+| Switchcraft | 5A |
+| Kycon, panel-mount | 5A |
+| **Kycon, PCB right-angle** | **8A — KLDHCX-8 series** |
 
-### The options, in plain terms
+The 5.5 × 2.5mm barrel is a consumer-laptop connector and the whole industry treats 5A as
+its ceiling **when it is panel-mounted**. The higher-rated parts exist only as board-mount,
+because the current rating depends on the termination and a soldered PCB joint carries more
+than a panel jack's solder tags.
 
-**The MS-01 end is not in question.** The MS-01 has a fixed barrel socket and will not be
-modified, so the cable's node end is a 5.5 × 2.5mm barrel plug whatever happens. The
-question is only **what goes on the back of the PDU.**
+### The consequence: a new small board
 
-**Option A — accept a 5A-class panel barrel jack, drop the locking requirement.**
-Cheapest and simplest, and the picture on the back of the box stays as described. But 5A is
-below the 7A the channel is designed to deliver, so the connector becomes the weakest link
-in the chain, and M-7 is reversed — cables can be pulled out by accident again.
+KLDHCX-8-0202-B is right-angle through-hole, so **it cannot bolt to the rear panel.** It
+goes on a small 2-layer **output board** behind the panel carrying all six jacks, with the
+barrels protruding through six clearance holes. Added to `bom.csv` as assembly `OUT`
+(~$20 including the board).
 
-**Option B — a 2-pin PCB-mount locking jack on a small board behind the panel.**
-Keeps the barrel format and gets the locking, at 5A. Adds a small PCB and a panel cutout
-per port. Still 5A.
+That board is also the natural home for the six output TVS diodes, which moved there from
+the 2-channel boards — a clamp belongs next to the connector it protects, not 150mm of wire
+away.
 
-**Option C — change the PDU-side connector to something properly rated.**
-Use a Molex Mini-Fit Jr latching connector on the rear panel (9A per circuit, four circuits
-with two per polarity, positive latch, tier-1 rated) and make the cable Mini-Fit Jr →
-barrel. The back of the box no longer shows six barrel jacks; it shows six latching
-connectors.
+### Margin
 
-This is the only option that meets both M-7 and the 7A rating, and it has a second benefit:
-**the panel side becomes a recessed female contact instead of an exposed pin**, which is a
-strict improvement on the live-plug analysis in `docs/safety.md` §2. It is also the
-connector family upstream already used for its own 24V input (`upstream-analysis.md`).
+| | Current | vs 8A rating |
+|---|---|---|
+| Sustained (measured, six nodes) | ~5.0A | 63% |
+| Turbo, ~45s | ~6.05A | 76% |
+| Channel design capability (E-2) | 7A | 88% |
+| Channel current limit (P-4) | ~10.5A | **131% — fault only** |
 
-Cost is comparable — around $2–3 per port either way.
+Comfortable on every real operating point. The 7A in E-2 is what the *channel* can deliver,
+not what the *load* draws. Above the current limit the jack is over its rating, but that is
+a fault condition the crowbar and fuse exist to end in milliseconds.
 
-**Nothing downstream of the rear panel changes in any option.** This is a connector and a
-cable, not a redesign. It does need deciding before the rear panel is drawn (WP-7).
+### What dropping the locking requirement costs
+
+Recorded honestly in `docs/safety.md` §2: the locking collar was one of four controls
+against a dangling live plug, and **the P-12 unconnected-output alert and the operating
+procedure are now the whole response.** That is a thinner set than the earlier draft
+claimed. It is judged acceptable because the hazard is ES1 to a person, is inherited from
+the six existing bricks rather than introduced by this design, and — unlike a brick — can
+be de-energised from anywhere.
 
 ---
 
@@ -171,19 +176,20 @@ Replaces `SPECIFICATION.md` §5.
 | T-Display-S3 Touch | $25 |
 | Backplane + bus fuse | $28 |
 | PCBA setup and assembly | $120 |
-| **Electronics** | **$352** |
+| **Electronics** | **$372** |
 | Mean Well RSP-1000-48 | $268 |
 | 3× Noctua NF-A4x20 PWM | $45 |
 | IEC inlet, latching button, PSU mating connector | $18 |
-| Output connectors + 6× interconnect cables | $45 |
+| 6× 18AWG interconnect cables | $30 |
 | Sheet metal, printed panels, fasteners, bus wiring | $135 |
-| **Chassis and power** | **$511** |
-| **Build cost, one unit** | **$936** |
+| **Chassis and power** | **$496** |
+| Output board (6× jacks + TVS + PCB) | $20 |
+| **Build cost, one unit** | **$939** |
 | LM5116 evaluation board (one-off, R-0 control 2) | $136 |
-| **First unit, all in** | **$1,072** |
+| **First unit, all in** | **$1,076** |
 
 **Plus board re-spins.** R-2 says budget three, at $30–80 and 2–3 weeks each: **add
-$150–250.** A realistic first-unit figure is **$1,200–1,300.**
+$150–250.** A realistic first-unit figure is **$1,200–1,330.**
 
 Against the spec's $780–860 estimate this is up about $150, almost entirely the PSU
 ($268 rather than $165 — the RSP-750-48 was cheaper before it was discontinued) and the

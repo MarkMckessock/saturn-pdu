@@ -51,10 +51,25 @@ is pulling it out of the wall.
 
 | Control | What it does |
 |---|---|
-| **Locking barrel plugs** (threaded collar, Switchcraft S760K class) at the PDU end | Prevents the accidental disconnection that creates a dangling live plug in the first place -- by far the most common way this happens |
 | **Unconnected-output alert** (P-12) | A port that is enabled at 19V but drawing under 20mA has nothing on it. The INA226s already measure this. Raises an alarm on the display, in the logs and in `/metrics` |
 | **Alert only -- never an automatic switch-off** | A faulty shunt reading must never be able to de-energise a running node. A false positive here is annoying; the alternative is an outage |
 | **Operating procedure** (below) | The control that actually does the work |
+
+> **Locking plugs were considered and dropped.** An earlier draft specified a
+> threaded-collar locking jack at the PDU end to prevent the accidental
+> disconnection that creates a dangling live plug. It was removed for two
+> reasons. First, **no such part exists** at an adequate current rating: the
+> 5.5 x 2.5mm format tops out around 5-8A industry-wide, and every locking
+> variant is 5A -- below what a channel delivers (WP-3 sourcing). Second, and
+> more to the point, it was solving a problem the stock bricks already have and
+> nobody loses sleep over.
+>
+> **The honest consequence: the P-12 alert and the operating procedure below are
+> now the whole of the response.** That is a thinner set of controls than the
+> earlier draft claimed, and it is stated plainly rather than quietly dropped.
+> It is judged acceptable because the hazard is ES1 to a person, is inherited
+> rather than introduced, and -- unlike with a brick -- can be switched off from
+> anywhere.
 
 ### Operating procedure
 

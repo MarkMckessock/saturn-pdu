@@ -12,7 +12,6 @@ assembly,ref,qty_per_asm,asm_count,qty_total,description,value,package,manufactu
 2CH,U5 U6,2,3,6,Precision shunt reference for OVP sense,TLV431A,SOT-23,Texas Instruments,TLV431ACDBZR,LCSC,C7519,stocked,0.10,0.60,Diodes TLV431ASA-7,EST,,"OVP comparator per P-1. Powered from the channel's own 19V output - independent of the MCU"
 2CH,SCR1 SCR2,2,3,6,Thyristor crowbar 12A 500V,BT151-500R,TO-220AB,WeEn,BT151-500R.127,LCSC,C9211,stocked,0.82,4.92,ON MCR12DCMT4G,LIVE,,"ITSM 120A/10ms = 72 A2s. Fault is 21A for 10-50ms = 22 A2s. 3x margin"
 2CH,F1 F2,2,3,6,Fuse fast-blow 5A 125V,5A F,Nano2 / 2410 SMD,Littelfuse,0453005.MR,LCSC,-,-,0.45,2.70,Bel 0685H5000-01,EST,,Coordinates with the crowbar per protection.md
-2CH,D1 D2,2,3,6,TVS output clamp,SMCJ22A,SMC / DO-214AB,Littelfuse,SMCJ22A,LCSC,-,-,0.18,1.08,Bourns SMCJ22A,EST,,Second clamp in parallel with the crowbar (R-1 control 2)
 2CH,D3 D4,2,3,6,TVS bus clamp,SMCJ58A,SMC / DO-214AB,Littelfuse,SMCJ58A,LCSC,-,-,0.18,1.08,Bourns SMCJ58A,EST,,
 2CH,Rb1 Rb2,2,3,6,Output bleed resistor,4.7k 1W,2512,Yageo,RC2512JK-074K7L,LCSC,-,-,0.06,0.36,-,EST,,P-9: a commanded power cycle must actually discharge
 2CH,RT1,1,3,3,NTC thermistor board temperature,10k B3950,0603 / leaded,Murata,NCP18XH103F03RB,LCSC,-,-,0.12,0.36,Vishay NTCS0603E3103FMT,EST,,"FMEA row 9: must be wired to fail HOT (open = max fan). Action item"
@@ -37,8 +36,10 @@ CHASSIS,J50,1,1,1,PSU CN50 mating connector + crimp contacts,DF11-12DS-2C,-,Hiro
 CHASSIS,FAN1-3,3,1,3,40x20mm PWM fan with tach,NF-A4x20 PWM,40x40x20mm,Noctua,NF-A4x20 PWM,Amazon/DigiKey,-,stocked,15.00,45.00,Sunon MF40202VX-1000U-A99,EST,,T-4/T-5
 CHASSIS,J60,1,1,1,IEC C14 inlet fused with switch,-,panel,Schurter,-,DigiKey,-,stocked,6.00,6.00,Qualtek,EST,,P-5/P-11
 CHASSIS,SW1,1,1,1,Latching illuminated pushbutton 16mm,-,panel,-,-,-,-,stocked,8.00,8.00,-,EST,,F-4. Drives PSU remote ON/OFF - no 15A commutation anywhere
-CHASSIS,J1-J6,6,1,6,OUTPUT CONNECTOR - DECISION OPEN,-,panel,-,-,-,-,-,2.50,15.00,-,OPEN,OPEN-8,"BLOCKER. No panel-mount, locking, 5.5x2.5mm, >=7A barrel jack exists. See sourcing-notes.md section 3"
-CHASSIS,CBL1-6,6,1,6,Interconnect cable PDU to MS-01 18AWG 500mm,-,-,-,-,-,-,-,5.00,30.00,-,EST,,"Depends on OPEN-8. MS-01 end is a 5.5x2.5 barrel plug regardless"
+OUT,J1-J6,6,1,6,DC power jack high-current 8A,5.5x2.5mm,THT right-angle,Kycon,KLDHCX-8-0202-B,Mouser,538-KLDHCX-8-0202-B,5196,1.81,10.86,DigiKey 2092-KLDHCX-8-0202-B-ND (104),LIVE,,"OPEN-8 RESOLVED. 8A / 24VDC. Right-angle THT so it mounts on the output board, not the panel - barrels protrude through six clearance holes. 8A against a 6.05A turbo peak = 32% margin"
+OUT,D10-D15,6,1,6,TVS output clamp (moved from 2CH),SMCJ22A,SMC / DO-214AB,Littelfuse,SMCJ22A,LCSC,-,-,0.18,1.08,Bourns SMCJ22A,EST,,Co-located with the jack it protects
+OUT,PCB,1,1,1,2-layer output board carrying 6x jacks + TVS,-,~180x25mm,JLCPCB,-,JLCPCB,-,-,8.00,8.00,PCBWay,EST,,New assembly - consequence of the jack being right-angle THT rather than panel-mount
+CHASSIS,CBL1-6,6,1,6,Interconnect cable 18AWG 500mm,5.5x2.5 barrel plug both ends,-,-,-,-,-,-,5.00,30.00,-,EST,,"Both ends male. Not locking - see docs/safety.md S2 for the operating procedure that replaces it"
 CHASSIS,-,1,1,1,"Sheet metal 1U chassis, 3D-printed panels, fasteners, standoffs",-,-,-,-,-,-,-,120.00,120.00,-,EST,,
 CHASSIS,-,1,1,1,"48V bus wiring, lugs, heatshrink, ferrules",-,-,-,-,-,-,-,15.00,15.00,-,EST,,
 SERVICE,-,1,1,1,PCBA setup + assembly (3x 2ch panelised + ctrl + bp),-,-,JLCPCB,-,JLCPCB,-,-,120.00,120.00,PCBWay,EST,,Setup fee dominates - this is why 3 identical boards panelise

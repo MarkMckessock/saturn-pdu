@@ -49,42 +49,30 @@ output_connector:
   inner_diameter_mm: 2.5          # PROVISIONAL (OPEN-5) -- 2.1 is the other candidate
   polarity: centre_positive       # PROVISIONAL (OPEN-5)
   panel_thread_mm: 8.0            # NOT provisional -- identical for both candidates
-  current_rating_min_a: 10        # a 7A jack runs warm; specify >=10A, not a generic part
-  locking: true                   # not friction-fit. Prevents the accidental disconnection
-                                  # that leaves a live plug dangling -- see docs/safety.md
+  current_rating_a: 8             # RESOLVED (OPEN-8). Kycon KLDHCX-8-0202-B.
+  locking: false                  # CHANGED 2026-09-30: user decision, locking not required.
+                                  # See docs/safety.md S2 for what this costs.
 
-  # ==> OPEN-8: THE PART ABOVE DOES NOT EXIST. <==
-  # WP-3 sourcing (2026-09-30) found no panel-mount, locking, 5.5x2.5mm, >=7A barrel
-  # jack from any tier-1 manufacturer. The 5.5x2.5 format tops out at 5-8A across the
-  # whole industry because it is a consumer-laptop connector, and every locking variant
-  # is PCB-mount rather than panel-mount.
+  # OPEN-8 RESOLVED 2026-09-30.
   #
-  # The MS-01 end is NOT in question -- it has a fixed barrel socket and is not being
-  # modified, so the cable's node end is a 5.5x2.5 plug regardless. The open question is
-  # only what goes on the PDU's rear panel. Three options in fab/sourcing-notes.md S3.
+  # WP-3 sourcing found NO panel-mount 5.5x2.5mm barrel jack rated above 5A from
+  # any manufacturer -- Same Sky's entire panel-mount line tops out at 5.0A. With
+  # the locking requirement dropped, the constraint reduced to "5.5x2.5mm, >=7A",
+  # and that DOES exist as a right-angle through-hole part:
+  part: Kycon KLDHCX-8-0202-B
+  mounting: pcb_right_angle        # NOT panel mount -- see note below
+  distributor: Mouser 5196 in stock / DigiKey 104
+  price_qty10_usd: 1.81
+  voltage_rating_v: 24             # 19V output: 26% margin
   #
-  # Gates the rear panel (WP-7). Does not gate anything upstream of it.
-  open_8_status: unresolved
-  open_8_candidates:
-    - option: A
-      part: generic panel-mount 5.5x2.5 barrel jack
-      rating_a: 5
-      locking: false
-      loses: "reverses M-7, and 5A is below the 7A the channel can deliver"
-    - option: B
-      part: Kycon KLDX-0202-A on a small PCB behind the panel
-      rating_a: 5
-      locking: true
-      loses: "still 5A; adds a PCB and a cutout per port"
-    - option: C
-      part: Molex Mini-Fit Jr, 4 circuit, 2 per polarity
-      rating_a: 18
-      locking: true
-      gains: >-
-        meets M-7 and the 7A rating; the panel side becomes a RECESSED FEMALE contact
-        instead of an exposed pin, which strictly improves docs/safety.md S2; same
-        connector family upstream used for its own 24V input
-      loses: "the rear panel no longer shows barrel jacks"
+  # MOUNTING CONSEQUENCE: this is a right-angle THT jack, so it cannot bolt to the
+  # rear panel directly. It goes on a small 2-layer "output board" behind the panel
+  # carrying all six jacks, with the barrels protruding through six clearance holes.
+  # That board is also the natural home for the output TVS and bleed resistors.
+  # Added to the BOM as assembly OUT.
+  #
+  # MARGIN: 8A rated against 6.05A turbo peak (32%) and ~5A sustained (60%).
+  # The 7A figure in E-2 is the CHANNEL's capability, not the load.
 
 # Interconnect: PDU rear jack -> MS-01 DC input. Six required.
 # The stock Huntkey brick's cable is CAPTIVE, so it cannot be reused: these are

@@ -172,7 +172,7 @@ Priority: **M** mandatory · **S** should · **C** could.
 | M-1 | M | 19" rack, 1U (≤44.45mm), standard ear spacing | Target rack |
 | M-2 | M | Chassis accepts the RSP-1000-48 (295 × 127 × 41mm) | Fitted unit as of WP-3. The envelope is unchanged from when this was written as an upgrade path — which is why the switch cost nothing (§4.2.3) |
 | M-3 | M | All six barrel jacks, IEC inlet and RJ45 on the rear panel | Cables exit rearward in a rack |
-| M-7 | S | Output jacks accept a **locking** (threaded-collar) barrel plug | Prevents the accidental disconnection that leaves a live plug dangling — the most common way §4.8.1's hazard actually occurs |
+| ~~M-7~~ | — | ~~Output jacks accept a **locking** (threaded-collar) barrel plug~~ | **WITHDRAWN 2026-09-30.** No locking jack exists above 5A in this barrel size (WP-3), and the requirement was dropped by decision. `docs/safety.md` §2 records what the remaining controls are and that they are thinner for it |
 | M-4 | M | Master button and status indication on the front panel | Operated from the front |
 | M-5 | S | 3D-printed panels fit a 220×220mm bed | Inherited from upstream; keeps the design home-printable |
 | M-6 | M | Board-mounted components ≤40mm tall | 41mm PSU in a 43mm envelope — height is the binding axis |
@@ -724,8 +724,18 @@ is NTC-driven (T-4) with tach feedback (T-5), which also serves T-3 — at clust
 it is most likely 5.5×2.5mm centre-positive. **Measure a stock MS-01 plug with calipers
 before any footprint or panel cutout is drawn.** This gates all mechanical work.
 
-Barrel jacks at 7A run warm; specify a panel jack rated ≥10A, not a generic part.
-Specify a **locking** (threaded-collar, Switchcraft S760K class) jack per M-7.
+**Jack selected at WP-3: Kycon KLDHCX-8-0202-B**, 8A / 24VDC, 5.5 × 2.5mm, $1.81 at qty 10,
+5,196 in stock. 8A against a 6.05A turbo peak is 32% margin; against the ~5A sustained draw
+it is 63%.
+
+> **It is a right-angle through-hole part, not a panel jack, and that is not a compromise —
+> it is the reason it is rated 8A.** Every *panel-mount* 5.5 × 2.5mm jack in the industry
+> tops out at 5.0A, because the rating is set by the termination and a soldered PCB joint
+> carries more than a panel jack's solder tags. The consequence is a small 2-layer **output
+> board** behind the rear panel carrying all six jacks, with the barrels protruding through
+> six clearance holes. The six output TVS diodes move onto it as well — a clamp belongs
+> beside the connector it protects, not 150mm of wire away. Added to the BOM as assembly
+> `OUT`, ~$20 including the board.
 
 #### 4.8.1 The interconnect cable — and the live-plug question
 
@@ -763,9 +773,14 @@ a live 19V male plug with tip and sleeve ~1mm apart. Two separate questions:
 **This hazard is inherited, not introduced.** Every stock brick already ends in a
 live male plug with 9.47A behind it; six bricks means six of them in the rack
 today. What the PDU adds is the ability to **de-energise a dangling cable
-remotely**, which no brick can do. Controls: locking jacks (M-7), the P-12 alert,
-and the operating procedure in `docs/safety.md` — unused ports stay off, and a port
-is switched off before it is unplugged.
+remotely**, which no brick can do. Controls: the P-12 alert and the operating
+procedure in `docs/safety.md` — unused ports stay off, and a port is switched off
+before it is unplugged.
+
+> M-7 originally added locking jacks as a third control. **It was withdrawn**, both
+> because no locking jack exists above 5A in this barrel size and because the
+> requirement was dropped by decision. `docs/safety.md` §2 states plainly that the
+> two remaining controls are now the whole of the response.
 
 ---
 
@@ -788,23 +803,24 @@ it is still the right trade (§4.3.2.1).
 |---|---|
 | 6 buck channels | $128 |
 | 3× 4-layer 2-channel PCBs | $20 |
+| Output board — 6× jacks, TVS, PCB (§4.8) | $20 |
 | Control board | $31 |
 | T-Display-S3 Touch display (F-8) | $25 |
 | Backplane + 20A bus fuse | $28 |
 | PCBA setup + assembly | $120 |
-| **Electronics** | **$352** |
+| **Electronics** | **$372** |
 | Mean Well RSP-1000-48 | $268 |
 | 3× Noctua NF-A4x20 PWM | $45 |
 | IEC inlet, latching button, PSU mating connector | $18 |
-| Output connectors + 6× 18AWG interconnect cables (§4.8.1) | $45 |
+| 6× 18AWG interconnect cables (§4.8.1) | $30 |
 | Sheet metal, printed panels, fasteners, bus wiring | $135 |
-| **Chassis and power** | **$511** |
-| **Build cost, one unit** | **$936** |
+| **Chassis and power** | **$496** |
+| **Build cost, one unit** | **$939** |
 | LM5116 evaluation board — one-off, R-0 control 2 | $136 |
-| **First unit, all in** | **$1,072** |
+| **First unit, all in** | **$1,076** |
 
 **Excludes prototype iterations, and R-2 says budget three board spins** — add ~$150–250
-and several weeks. A realistic all-in first-unit figure is **$1,200–1,300.**
+and several weeks. A realistic all-in first-unit figure is **$1,200–1,330.**
 
 That is ~$150 above the first-draft estimate, almost entirely the PSU ($268 rather than
 $165 — the RSP-750-48 was cheaper before it was discontinued) and the inductor. The
@@ -833,7 +849,7 @@ be the actual reason.
 | R-7 | 19V from an integrated regulator | ✅ **Closed** | Voltage was never the issue; thermals were. Merged into OPEN-1 |
 | **OPEN-5** | **Barrel jack dimensions** | 🔴 **Open — needs you** | Physical caliper measurement. Gates all mechanical work |
 | **OPEN-6** | **Real six-node peak power draw** | 🟡 **Open — informational** | Was a gate against a 753.6W supply. At 1008W the design absorbs a reading 38% above estimate, so this now validates §4.2 rather than blocking it |
-| **OPEN-8** | **Rear-panel output connector** | 🔴 **Open — needs you** | Sourcing found no panel-mount, locking, 5.5×2.5mm, ≥7A barrel jack anywhere. Three options in `fab/sourcing-notes.md` §3. Gates the rear panel (WP-7) |
+| OPEN-8 | Rear-panel output connector | ✅ **Closed** | Locking dropped by decision; **Kycon KLDHCX-8-0202-B**, 8A, 5,196 in stock. Right-angle THT, so it brings a small output board with it (§4.8) |
 | **R-0** | **Independent schematic + layout review** | 🔴 **Accepted, not resolved** | Declined. Compensating controls in §7 carry the full weight (§4.3.1.1) |
 | OPEN-7 | PSU discontinued | ✅ **Closed** | RSP-1000-48 EOL → **RSP-1000-48**, which also closes R-3 (§4.2.3) |
 
