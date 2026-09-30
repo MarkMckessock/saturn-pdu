@@ -1,0 +1,4 @@
+(sym_lib_table
+	(version 7)
+	(lib (name "saturn-pdu") (type "KiCad") (uri "${KIPRJMOD}/../lib/saturn-pdu.kicad_sym") (options "") (descr "Saturn PDU project symbols"))
+)
