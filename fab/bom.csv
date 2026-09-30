@@ -1,0 +1,45 @@
+assembly,ref,qty_per_asm,asm_count,qty_total,description,value,package,manufacturer,mfr_pn,distributor,dist_pn,stock,unit_price_qty10,ext_price,second_source,verified,flags,notes
+2CH,U1 U2,2,3,6,Synchronous buck controller 6-100V current-mode,LM5116,HTSSOP-20-EP,Texas Instruments,LM5116MHX/NOPB,LCSC,C13755,19990,1.88,11.28,DigiKey 296-23623-1-ND,LIVE,,Qty-100 drops to $1.42. Spec estimated $5.13 - came in far under
+2CH,Q1 Q2 Q3 Q4,4,3,12,N-ch MOSFET 60V 2.7mR logic-level,BSC0702LS,TDSON-8 (SuperSO8 5x6),Infineon,BSC0702LS,LCSC,C501503,8427,1.38,16.56,Nexperia PSMN5R5-60YS (LFPAK56),LIVE,SUBSTITUTION,"Replaces spec's PSMN5R2-60YS which does not exist; the real Nexperia part is PSMN5R5-60YS and it is OUT OF STOCK at LCSC. BSC0702LS is better on every axis: 2.7mR vs 5.2mR, Qg 43nC vs 56nC, logic-level (3.9mR at Vgs=4.5V) so it is fully enhanced by the LM5116's 7.4V drive. Same part used HS and LS."
+2CH,L1 L2,2,3,6,Power inductor shielded,22uH,XAL1510 15.5x16.5x10mm,Coilcraft,XAL1510-223MEB,Mouser,994-XAL1510-223MEB,stocked,7.55,45.30,Wurth 74439370220,LIVE,COST_OVERRUN,"Spec estimated $3.50; actual ~$7.55. Single largest per-channel overrun. See sourcing-notes.md for the Isat/Irms reconciliation."
+2CH,U3 U4,2,3,6,Bidirectional current/power monitor I2C,INA226,VSSOP-10,Texas Instruments,INA226AIDGSR,LCSC,C49851,43755,0.63,3.78,DigiKey 296-35892-1-ND,LIVE,,Spec estimated $2.50. Qty-100 drops to $0.55
+2CH,Rs1 Rs2,2,3,6,Current-sense resistor for LM5116 CS,7mR 1W 1%,2512,Bourns,CRA2512-FZ-R007ELF,LCSC,-,-,0.45,2.70,Vishay WSL2512R0070FEA,EST,,Value per SPECIFICATION.md 4.3.3. Confirm against final current-limit calculation at WP-4b
+2CH,Rsh1 Rsh2,2,3,6,Telemetry shunt for INA226,2mR 1W 1% 50ppm,2512,Vishay,WSL2512R0020FEA,LCSC,-,-,0.40,2.40,Bourns CRA2512-FZ-R002ELF,EST,,14mV at 7A = 17% of INA226 range
+2CH,Cout,12,3,36,Output bulk capacitor polymer low-ESR,220uF 35V,D8 SMD,Panasonic,EEHZA1V221P,LCSC,-,-,1.20,43.20,Nichicon PCJ1V221MCL1GS,EST,,2 per channel
+2CH,Cout-c,24,3,72,Output ceramic,22uF 50V X7R,1210,Murata,GRM32ER71H226KE15L,LCSC,-,-,0.25,18.00,Samsung CL32B226KAJNNNE,EST,,4 per channel
+2CH,Cin,12,3,36,Input bulk capacitor,100uF 63V,D10 SMD,Panasonic,EEEFK1J101P,LCSC,-,-,0.55,19.80,Nichicon UCD1J101MNL1GS,EST,,"2 per channel. Sized for ride-through during a crowbar event on a neighbouring channel (protection.md)"
+2CH,Cin-c,24,3,72,Input ceramic,2.2uF 100V X7R,1210,Murata,GRM32ER72A225KA35L,LCSC,-,-,0.30,21.60,TDK C3225X7S2A225K,EST,,4 per channel
+2CH,U5 U6,2,3,6,Precision shunt reference for OVP sense,TLV431A,SOT-23,Texas Instruments,TLV431ACDBZR,LCSC,C7519,stocked,0.10,0.60,Diodes TLV431ASA-7,EST,,"OVP comparator per P-1. Powered from the channel's own 19V output - independent of the MCU"
+2CH,SCR1 SCR2,2,3,6,Thyristor crowbar 12A 500V,BT151-500R,TO-220AB,WeEn,BT151-500R.127,LCSC,C9211,stocked,0.82,4.92,ON MCR12DCMT4G,LIVE,,"ITSM 120A/10ms = 72 A2s. Fault is 21A for 10-50ms = 22 A2s. 3x margin"
+2CH,F1 F2,2,3,6,Fuse fast-blow 5A 125V,5A F,Nano2 / 2410 SMD,Littelfuse,0453005.MR,LCSC,-,-,0.45,2.70,Bel 0685H5000-01,EST,,Coordinates with the crowbar per protection.md
+2CH,D1 D2,2,3,6,TVS output clamp,SMCJ22A,SMC / DO-214AB,Littelfuse,SMCJ22A,LCSC,-,-,0.18,1.08,Bourns SMCJ22A,EST,,Second clamp in parallel with the crowbar (R-1 control 2)
+2CH,D3 D4,2,3,6,TVS bus clamp,SMCJ58A,SMC / DO-214AB,Littelfuse,SMCJ58A,LCSC,-,-,0.18,1.08,Bourns SMCJ58A,EST,,
+2CH,Rb1 Rb2,2,3,6,Output bleed resistor,4.7k 1W,2512,Yageo,RC2512JK-074K7L,LCSC,-,-,0.06,0.36,-,EST,,P-9: a commanded power cycle must actually discharge
+2CH,RT1,1,3,3,NTC thermistor board temperature,10k B3950,0603 / leaded,Murata,NCP18XH103F03RB,LCSC,-,-,0.12,0.36,Vishay NTCS0603E3103FMT,EST,,"FMEA row 9: must be wired to fail HOT (open = max fan). Action item"
+2CH,J1,1,3,3,Backplane board-to-board connector,2x10 2.54mm,THT,Amphenol,-,LCSC,-,-,0.90,2.70,-,EST,,48V in / I2C / enable / NTC
+2CH,passives,~50,3,150,"Compensation, feedback, UVLO dividers, boot caps, gate resistors, VCC cap",assorted,0402/0603/0805,various,-,LCSC,-,-,0.012,1.80,-,EST,,Value set at WP-4b schematic
+2CH,PCB,1,3,3,4-layer 2oz outer / 1oz inner 1.6mm,-,90x130mm approx,JLCPCB,-,JLCPCB,-,-,6.67,20.00,PCBWay,EST,,5pcs minimum order; price is per used board
+CTRL,U10,1,1,1,Microcontroller module,ESP32-S3-WROOM-1-N16R8,module,Espressif,ESP32-S3-WROOM-1-N16R8,LCSC,C2913202,stocked,3.50,3.50,ESP32-S3-WROOM-1U,EST,,
+CTRL,U11,1,1,1,SPI Ethernet controller,W5500,LQFP-48,WIZnet,W5500,LCSC,C32843,stocked,3.80,3.80,-,EST,,S-1: wired Ethernet not WiFi
+CTRL,J10,1,1,1,RJ45 with integrated magnetics,HR911105A,THT,HanRun,HR911105A,LCSC,C86586,stocked,1.80,1.80,Pulse J0011D01BNL,EST,,
+CTRL,U12,1,1,1,Housekeeping buck 100V 1A integrated FET,LM5164,SO PowerPAD-8,Texas Instruments,LM5164DDAR,LCSC,C477928,13462,1.54,1.54,LM5165 (lower current),LIVE,,"D-7: 48V bus -> 12V/1A. Replaces the PSU aux rail, which is 5V/0.5A on the RSP-1000-48"
+CTRL,U13,1,1,1,12V to 5V step-down 1A,TPS562201,SOT-23-6,Texas Instruments,TPS562201DDCR,LCSC,C120167,stocked,0.55,0.55,MP2315,EST,,Feeds ESP32-S3 / W5500 / display / INA226 bus
+CTRL,U14,1,1,1,I2C I/O expander for status LEDs,PCA9555,TSSOP-24,NXP,PCA9555PW,LCSC,C36846,stocked,1.10,1.10,TCA9535,EST,,F-6. Conserves MCU GPIO
+CTRL,Q10-Q15,6,1,6,Open-drain enable pulldown,2N7002,SOT-23,onsemi,2N7002,LCSC,C8545,stocked,0.02,0.12,BSS138,EST,,"FAIL-ON: MCU pulls LM5116 UVLO low to DISABLE. Unpowered MCU = all outputs ON (F-5/S-4)"
+CTRL,misc,1,1,1,"Crystal, USB-C programming port, connectors, decoupling, level shifting",assorted,-,various,-,LCSC,-,-,4.00,4.00,-,EST,,
+CTRL,PCB,1,1,1,4-layer 1.6mm,-,~80x100mm,JLCPCB,-,JLCPCB,-,-,15.00,15.00,PCBWay,EST,,
+DISP,U20,1,1,1,1.9in 170x320 IPS + CST816 capacitive touch,T-Display-S3 Touch,module 60.8x25.5mm,LILYGO,T-Display-S3 Touch,LILYGO store,-,stocked,25.00,25.00,none - see notes,EST,SINGLE_SOURCE,"No distributor equivalent fits 1U (SPECIFICATION.md 4.5.6). Not a tier-1 part and not stocked by DigiKey/Mouser. Buy two."
+BP,-,1,1,1,"Backplane: 48V distribution, I2C, enable lines, 3x board connectors, bus fuse holder, TVS",-,-,various,-,LCSC,-,-,12.00,12.00,-,EST,,Passive
+BP,F10,1,1,1,Bus fuse 20A,20A,ANL / blade + holder,Littelfuse,-,-,-,-,6.00,6.00,-,EST,,P-6
+BP,PCB,1,1,1,2-layer 2oz,-,-,JLCPCB,-,JLCPCB,-,-,10.00,10.00,PCBWay,EST,,
+CHASSIS,PSU1,1,1,1,AC-DC PSU 48V 21A 1008W active PFC,RSP-1000-48,295x127x41mm,Mean Well,RSP-1000-48,DigiKey,1866-3225-ND,211,267.90,267.90,Mouser 709-RSP-1000-48 (331 in stock),LIVE,LONG_LEAD,"In stock now, but 17-19 week FACTORY lead. Buy when you buy, do not assume it will be there later. Mouser shows 390 units on order for 2026-11-02"
+CHASSIS,J50,1,1,1,PSU CN50 mating connector + crimp contacts,DF11-12DS-2C,-,Hirose,DF11-12DS-2C,DigiKey,H2025-ND,stocked,2.20,4.00,-,EST,,"Remote ON/OFF (pin 6 to pin 2/-S), DC OK, remote sense. Includes DF11-2428SCF crimps"
+CHASSIS,FAN1-3,3,1,3,40x20mm PWM fan with tach,NF-A4x20 PWM,40x40x20mm,Noctua,NF-A4x20 PWM,Amazon/DigiKey,-,stocked,15.00,45.00,Sunon MF40202VX-1000U-A99,EST,,T-4/T-5
+CHASSIS,J60,1,1,1,IEC C14 inlet fused with switch,-,panel,Schurter,-,DigiKey,-,stocked,6.00,6.00,Qualtek,EST,,P-5/P-11
+CHASSIS,SW1,1,1,1,Latching illuminated pushbutton 16mm,-,panel,-,-,-,-,stocked,8.00,8.00,-,EST,,F-4. Drives PSU remote ON/OFF - no 15A commutation anywhere
+CHASSIS,J1-J6,6,1,6,OUTPUT CONNECTOR - DECISION OPEN,-,panel,-,-,-,-,-,2.50,15.00,-,OPEN,OPEN-8,"BLOCKER. No panel-mount, locking, 5.5x2.5mm, >=7A barrel jack exists. See sourcing-notes.md section 3"
+CHASSIS,CBL1-6,6,1,6,Interconnect cable PDU to MS-01 18AWG 500mm,-,-,-,-,-,-,-,5.00,30.00,-,EST,,"Depends on OPEN-8. MS-01 end is a 5.5x2.5 barrel plug regardless"
+CHASSIS,-,1,1,1,"Sheet metal 1U chassis, 3D-printed panels, fasteners, standoffs",-,-,-,-,-,-,-,120.00,120.00,-,EST,,
+CHASSIS,-,1,1,1,"48V bus wiring, lugs, heatshrink, ferrules",-,-,-,-,-,-,-,15.00,15.00,-,EST,,
+SERVICE,-,1,1,1,PCBA setup + assembly (3x 2ch panelised + ctrl + bp),-,-,JLCPCB,-,JLCPCB,-,-,120.00,120.00,PCBWay,EST,,Setup fee dominates - this is why 3 identical boards panelise
+TOOLING,-,1,1,1,LM5116 evaluation board (R-0 control 2),LM5116-12EVAL/NOPB,-,Texas Instruments,LM5116-12EVAL/NOPB,DigiKey,296-29236-ND,5,136.12,136.12,Arrow (3 units @ $118.81),LIVE,LONG_LEAD;LOW_STOCK,"ORDER FIRST. 3-5 units in stock across all distributors, 12-week factory lead. Not needed until stage 3, but it will not be there in 12 weeks if you wait"

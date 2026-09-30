@@ -440,28 +440,37 @@ binding constraint** — that is a measurement, not a guess, and the parts are p
 
 #### 4.3.3 Loss budget (per channel at 7A)
 
-Assuming 60V / ~5.2mΩ MOSFETs (e.g. PSMN5R2-60YS), R_ds(on) hot ≈ 1.5× nominal:
+Assuming 60V / ~2.7mΩ logic-level MOSFETs (**Infineon BSC0702LS**, fitted at WP-3),
+R_ds(on) hot ≈ 1.5× the 4.5V maximum = 5.85mΩ — deliberately the pessimistic end, because
+the LM5116 drives its gates from a 7.4V rail rather than 10V:
+
+> **Corrected at WP-3.** This section originally named `PSMN5R2-60YS`. **No such part
+> exists** — the real Nexperia device is `PSMN5R5-60YS` (5.2mΩ), and it is out of stock.
+> The substituted BSC0702LS is lower R_ds(on), lower Q_g, cheaper, in four-figure stock,
+> and — the reason that actually matters — **characterised at V_gs = 4.5V as well as 10V**,
+> so its worst case at the LM5116's 7.4V drive is bounded rather than estimated. Recorded
+> as D-8; full comparison in `fab/sourcing-notes.md` §1.1.
 
 | Loss | Value | Derivation |
 |---|---|---|
-| HS conduction | 0.16W | `I² · R_ds · D = 49 × 0.0078 × 0.41` |
-| LS conduction | 0.23W | `49 × 0.0078 × 0.59` |
+| HS conduction | 0.12W | `I² · R_ds · D = 49 × 0.00585 × 0.41` |
+| LS conduction | 0.17W | `49 × 0.00585 × 0.59` |
 | **HS switching** | **1.68W** | `0.5 · V_in · I_out · (t_r+t_f) · f_sw = 0.5 × 48 × 7 × 40n × 250k` |
-| Gate drive | 0.11W | `Q_g · V_drv · f_sw × 2` |
-| Inductor DCR | 0.39W | `49 × 0.008` |
+| Gate drive | 0.08W | `Q_g · V_drv · f_sw × 2`, Q_g 43nC @ 10V |
+| Inductor DCR | 0.78W | `49 × 0.016` — the XAL1510-223's **maximum** DCR, not typical |
 | Inductor core | ~0.20W | Estimate |
 | Current-sense 7mΩ | 0.34W | `49 × 0.007` — requires a 1W part |
 | INA226 shunt 2mΩ | 0.10W | `49 × 0.002` |
 | Caps ESR, controller I_q, copper | ~0.4W | Estimate |
-| **Accounted total** | **~3.6W** | → 97.4% |
+| **Accounted total** | **~3.9W** | → 97.2% |
 | **Design target** | **≤6.6W** | **95%**, with margin for unmodelled loss |
 
-**Switching loss dominates at 48V input** — 1.68W of an accounted 3.6W, in one package.
+**Switching loss dominates at 48V input** — 1.68W of an accounted 3.9W, in one package.
 This drives three decisions: 250kHz rather than 300kHz+; low-Q_g FET selection as a
 primary criterion; and it is the strongest technical argument for evaluating the
 integrated-FET LT8645S under [OPEN-1].
 
-Design efficiency is held at **95%**, not the 97.4% the accounted losses suggest, because
+Design efficiency is held at **95%**, not the 97.2% the accounted losses suggest, because
 the model omits layout-dependent losses. 94% is the requirement (E-6).
 
 #### 4.3.4 Component targets
@@ -764,31 +773,45 @@ is switched off before it is unplugged.
 
 Qty-10 distributor pricing, indicative, to be verified against live stock.
 
-**Per channel ≈ $27:** LM5116 $1.31 (LCSC, verified) · FETs ×2 $1.80 · inductor $3.50 · INA226 $2.50 ·
-sense + shunt $1.30 · output caps $4.80 · input caps $3.00 · OVP + crowbar $1.20 ·
-fuse + TVS $1.45 · passives $0.60 · barrel jack $2.00.
+**Sourced at WP-3 on 2026-09-30.** Thirteen critical-path lines were looked up live;
+`fab/bom.csv` marks which. Commodity passives are catalogue estimates.
+
+**Per channel ≈ $21.30:** inductor $7.55 · FETs ×2 $2.76 · LM5116 $1.88 · INA226 $0.63 ·
+output caps $3.40 · input caps $2.35 · sense + shunt $0.85 · OVP + crowbar $0.60 ·
+fuse + TVS $0.81 · bleed + passives $0.47.
+
+**The inductor is now the single most expensive part in the channel** — more than the
+controller and both MOSFETs together. That is what the 2.3× saturation margin costs, and
+it is still the right trade (§4.3.2.1).
 
 | Item | Cost |
 |---|---|
-| 6 channels | $164 |
-| 3× 4-layer PCB (5pcs) | $40 |
-| PCBA setup + assembly | $120 |
-| Control board | $30 |
+| 6 buck channels | $128 |
+| 3× 4-layer 2-channel PCBs | $20 |
+| Control board | $31 |
 | T-Display-S3 Touch display (F-8) | $25 |
-| Backplane | $15 |
-| Wiring, connectors | $25 |
-| 6× 18AWG locking interconnect cables (§4.8.1) | $30 |
-| **Electronics** | **~$450** |
-| RSP-1000-48 | ~$245 |
-| Fans, IEC, button | ~$65 |
-| Sheet metal, printed panels, fasteners | ~$120 |
-| **Total per unit** | **~$780–860** |
+| Backplane + 20A bus fuse | $28 |
+| PCBA setup + assembly | $120 |
+| **Electronics** | **$352** |
+| Mean Well RSP-1000-48 | $268 |
+| 3× Noctua NF-A4x20 PWM | $45 |
+| IEC inlet, latching button, PSU mating connector | $18 |
+| Output connectors + 6× 18AWG interconnect cables (§4.8.1) | $45 |
+| Sheet metal, printed panels, fasteners, bus wiring | $135 |
+| **Chassis and power** | **$511** |
+| **Build cost, one unit** | **$936** |
+| LM5116 evaluation board — one-off, R-0 control 2 | $136 |
+| **First unit, all in** | **$1,072** |
 
 **Excludes prototype iterations, and R-2 says budget three board spins** — add ~$150–250
-and several weeks. A realistic all-in first-unit figure is **$900–1,100**, plus the R-0
-review if paid ($200–500).
+and several weeks. A realistic all-in first-unit figure is **$1,200–1,300.**
 
-Six stock Minisforum bricks are ~$240–360, so this is 3–4× the thing it replaces. The
+That is ~$150 above the first-draft estimate, almost entirely the PSU ($268 rather than
+$165 — the RSP-750-48 was cheaper before it was discontinued) and the inductor. The
+silicon came in *under* estimate: the LM5116 at $1.88 against $5.13, the INA226 at $0.63
+against $2.50.
+
+Six stock Minisforum bricks are ~$240–360, so this is 4–5× the thing it replaces. The
 delta buys remote per-node power control, per-node telemetry, a front-panel display and
 1U consolidation. Worth naming plainly: a used switched-and-metered rack PDU (APC AP7921
 class, ~$150–300) plugged into the six existing bricks delivers remote switching and
@@ -810,6 +833,7 @@ be the actual reason.
 | R-7 | 19V from an integrated regulator | ✅ **Closed** | Voltage was never the issue; thermals were. Merged into OPEN-1 |
 | **OPEN-5** | **Barrel jack dimensions** | 🔴 **Open — needs you** | Physical caliper measurement. Gates all mechanical work |
 | **OPEN-6** | **Real six-node peak power draw** | 🟡 **Open — informational** | Was a gate against a 753.6W supply. At 1008W the design absorbs a reading 38% above estimate, so this now validates §4.2 rather than blocking it |
+| **OPEN-8** | **Rear-panel output connector** | 🔴 **Open — needs you** | Sourcing found no panel-mount, locking, 5.5×2.5mm, ≥7A barrel jack anywhere. Three options in `fab/sourcing-notes.md` §3. Gates the rear panel (WP-7) |
 | **R-0** | **Independent schematic + layout review** | 🔴 **Accepted, not resolved** | Declined. Compensating controls in §7 carry the full weight (§4.3.1.1) |
 | OPEN-7 | PSU discontinued | ✅ **Closed** | RSP-1000-48 EOL → **RSP-1000-48**, which also closes R-3 (§4.2.3) |
 

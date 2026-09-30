@@ -110,6 +110,7 @@ values in `params.yaml` and neither blocks design work.
 |---|---|---|
 | OPEN-5 | Barrel jack dimensions | Both candidate sizes share the same 8mm panel thread, so the panel cutout is identical. Only the part number is provisional |
 | OPEN-6 | Real six-node peak draw | **Downgraded to informational.** The fitted RSP-1000-48 absorbs a reading 38% above estimate, so this validates the power budget rather than gating a purchase |
+| OPEN-8 | Rear-panel output connector | **New at WP-3.** No panel-mount, locking, 5.5×2.5mm, ≥7A barrel jack exists anywhere. Three options in `fab/sourcing-notes.md` §3 — needs a decision before the rear panel is drawn |
 | R-0 | No independent design review | **Accepted, not resolved.** Bench testing and the 30-day canary stand in for it. Residual risk is moderate and knowingly taken |
 
 ## Contributing
