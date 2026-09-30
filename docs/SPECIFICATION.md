@@ -170,7 +170,7 @@ Priority: **M** mandatory · **S** should · **C** could.
 | ID | Pri | Requirement | Justification |
 |---|---|---|---|
 | M-1 | M | 19" rack, 1U (≤44.45mm), standard ear spacing | Target rack |
-| M-2 | M | Chassis accepts **both** RSP-750-48 (250mm) and RSP-1000-48 (295mm) | Upgrade path without redesign (§4.2.3) |
+| M-2 | M | Chassis accepts the RSP-1000-48 (295 × 127 × 41mm) | Fitted unit as of WP-3. The envelope is unchanged from when this was written as an upgrade path — which is why the switch cost nothing (§4.2.3) |
 | M-3 | M | All six barrel jacks, IEC inlet and RJ45 on the rear panel | Cables exit rearward in a rack |
 | M-7 | S | Output jacks accept a **locking** (threaded-collar) barrel plug | Prevents the accidental disconnection that leaves a live plug dangling — the most common way §4.8.1's hazard actually occurs |
 | M-4 | M | Master button and status indication on the front panel | Operated from the front |
@@ -215,7 +215,7 @@ Priority: **M** mandatory · **S** should · **C** could.
 ### 4.1 System architecture
 
 ```
-IEC inlet (fused) ──► RSP-750-48 ──► 48V bus (fused) ──► backplane
+IEC inlet (fused) ──► RSP-1000-48 ──► 48V bus (fused) ──► backplane
                         ▲                                    │
                 remote ON/OFF                                 │
                 from latching button                          │
@@ -253,43 +253,80 @@ be sizing to a number no measurement supports.
 
 #### 4.2.2 Rail loading
 
-At 95% channel efficiency, 690W delivered draws **726W** from the 48V rail — **96% of
-the RSP-750-48's 753.6W.** This is tight and is stated plainly rather than smoothed over.
-It is judged acceptable because the 45-second turbo window is not synchronised across six
-independent Kubernetes nodes, and sustained all-six load draws 600W (80%).
+At 95% channel efficiency, 690W delivered draws **726W** from the 48V rail — **72% of
+the RSP-1000-48's 1008W.** Sustained all-six load draws 600W (60%).
 
-#### 4.2.3 Selection and upgrade path
+This is comfortable, and it was not always so. See §4.2.3.
 
-**Mean Well RSP-750-48** — 48V, 15.7A, 753.6W, 250 × 127 × 41 mm, 92%, active PFC,
-built-in fan, remote sense, 1U profile.
+#### 4.2.3 Selection
 
-The RSP-750-48 (250mm) and RSP-1000-48 (295mm) share a **127 × 41 mm cross-section**.
-**The chassis and 48V bus are designed to the 295mm RSP-1000-48 footprint** so either
-drops in. Build with the 750W; the telemetry in F-3 provides the evidence for whether the
-1000W is ever needed. This is a principal justification for building the metering.
+**Mean Well RSP-1000-48** — 48V, 21A, 1008W, 295 × 127 × 41 mm, ~91%, active PFC,
+built-in fan, remote sense, remote ON/OFF, DC OK, 1U profile.
 
-**Mount the PSU with its long axis across the rack width.** At 250mm (or 295mm) of the
-438.7mm internal width it consumes only 127mm of depth, so upstream's `19in_Dual-Tray`
-depth of ~213mm suffices for both options. Remaining volume: a full-width
-**438.7 × 86 mm** band (37,728 mm²) plus a **143.7 × 127 mm** pocket beside the PSU —
-ample for three 2-channel boards, the control board and the backplane. **Height, not
-depth, is the binding constraint** (M-6).
+**This is a change from the RSP-1000-48 specified in earlier drafts, made at WP-3 when
+sourcing revealed the RSP-1000-48 is discontinued.** The reasoning is recorded because
+the change closes a risk rather than merely substituting a part:
 
-#### 4.2.4 Decision record: single 750W vs 2× 450W
+| | RSP-1000-48 (was) | **RSP-1000-48 (is)** | UHP-750-48 (considered) |
+|---|---|---|---|
+| Lifecycle | **Discontinued** | **Active** | Active |
+| Availability | ~700 units remain | In stock | **17-week lead** |
+| Output | 753.6W | **1008W** | 753.6W |
+| Load at the 726W peak | **96%** | **72%** | 96% |
+| Efficiency | 92% | ~91% | **95%** |
+| Cooling | Own fan | Own fan | **Fanless — its ~38W becomes the chassis's problem** |
+| Size | 250 × 127 × 41 | 295 × 127 × 41 | 237 × 100 × 41 |
+| Price | $186–237 | ~$230–260 | ~$194 |
+
+**Three consequences, all favourable:**
+
+1. **The chassis does not change.** It was already dimensioned to the 295mm RSP-1000-48
+   under M-2, precisely so this unit would drop in. The upgrade path became the build.
+2. **Risk R-3 closes outright.** 72% of rating is not a marginal operating point, so the
+   headroom question that motivated M-2 no longer exists.
+3. **OPEN-6 is downgraded from a hard gate to informational.** The six-node measurement
+   was a gate because a high reading would have invalidated a 753.6W supply. At 1008W the
+   design tolerates a measurement 38% above the estimate before the question reopens.
+   The measurement is still worth taking — it is still the only real evidence in §4.2.1 —
+   but it no longer blocks a purchase.
+
+**The UHP-750-48 was the interesting near-miss.** It is Mean Well's actual successor and
+is better on two axes that matter here: 95% efficiency, and **completely silent**, which
+would have helped T-3 more than anything else in the design, since the PSU's own fan is
+likely the loudest thing in the box. It was rejected on a 17-week lead time and because
+being fanless inverts the thermal budget — its ~38W of loss stops being self-managed and
+becomes chassis dissipation, roughly doubling the airflow the design must handle (§4.7).
+Worth revisiting for a second unit, where a four-month lead is not an obstacle.
+
+**Mount the PSU with its long axis across the rack width.** At 295mm of the 438.7mm
+internal width it consumes only 127mm of depth, so upstream's `19in_Dual-Tray` depth of
+~213mm suffices. Remaining volume: a full-width **438.7 × 86 mm** band (37,728 mm²) plus
+a **143.7 × 127 mm** pocket beside the PSU — ample for three 2-channel boards, the control
+board and the backplane. **Height, not depth, is the binding constraint** (M-6).
+
+#### 4.2.4 Decision record: single large supply vs 2× 450W
 
 Analysed and rejected. Recorded so it is not re-litigated.
 
-| | 1× RSP-750-48 | 2× HRP-450-48 |
+> Originally argued against the 753.6W RSP-750-48, where the dual option's headroom
+> advantage was its strongest card. **With the RSP-1000-48 fitted (§4.2.3) the single
+> supply now wins on headroom too**, so the argument below only got stronger. It is
+> preserved because the three structural objections are what actually decided it, and
+> they are unchanged.
+
+| | 1× RSP-1000-48 | 2× HRP-450-48 |
 |---|---|---|
-| Total | 753.6W | 912W |
-| Load at 726W peak | 96% | 80% |
+| Total | **1008W** | 912W |
+| Load at 726W peak | **72%** | 80% |
 | Efficiency | 92% | 89.5% (~22W more heat in 1U) |
 | Footprint | 250×127 = 31,750 mm² | rotated 210×218 = 45,780 mm² |
 | Side-by-side fit | n/a | **2×218 = 436mm in 438.7mm — does not fit** |
 | AC inlets | 1 | 2 |
 | Board architecture | 3× identical 2-channel | forced to 2× 3-channel |
 
-Dual genuinely wins on headroom — the strongest argument for it. It loses on three counts:
+Dual no longer wins on headroom at all — 1008W beats 912W, and 72% beats 80%. When this
+was written against the 753.6W unit it did, and that was the strongest argument for it.
+It lost then on three structural counts, all of which still stand:
 
 1. **It cannot sit side-by-side.** 1.35mm per side is inside sheet-metal tolerance,
    before airflow or cable routing. Only a 90° rotation works, costing 44% more tray area.
@@ -301,7 +338,7 @@ Dual genuinely wins on headroom — the strongest argument for it. It loses on t
    control-plane nodes split 2+1, half of all PSU failures lose quorum anyway. The
    backplane, master switch and chassis fan remain single points of failure regardless.
 
-The headroom concern is better answered by the RSP-1000-48 drop-in, which also supports
+The headroom concern was answered by fitting the RSP-1000-48 outright (§4.2.3), which also supports
 active current sharing if a second chassis is ever wanted. Genuine cluster resilience
 belongs at the second-PDU level, not inside one 1U box.
 
@@ -463,19 +500,22 @@ channel's own output**, independent of the MCU and of the regulation loop (P-1).
   until it clears, isolating the channel permanently.
 
 **Coordination:** the fault path is 48V → shorted HS FET → inductor → SCR → ground,
-current-limited by the PSU (~18A). At ~3× rating a 5A fast-blow clears in the order of
+current-limited by the PSU (~21A). At ~3× rating a 5A fast-blow clears in the order of
 100ms. During that window the node sees the SCR drop, not 48V. The crowbar does the
 protecting; the fuse does the isolating. The SCR must be rated for the PSU's limited
 current for that duration.
 
-**OPEN-3 — RESOLVED, favourably.** The RSP-750-48's overload behaviour is specified as
+**OPEN-3 — RESOLVED, favourably.** The RSP-1000-48's overload behaviour is specified as
 **"over load (constant current limiting)"**. This is the best of the three possible
 behaviours for crowbar coordination:
 
 - **Constant current** means that during a crowbar event the PSU *holds* current at its
-  limit (15.7A rated, trimmable to 110%) rather than shutting down or hiccupping. A 5A
-  fast-blow fuse seeing a sustained ~15A — 3× rating — clears predictably, in the order of
-  100ms.
+  limit (21A rated, trimmable to 110%) rather than shutting down or hiccupping. A 5A
+  fast-blow fuse seeing a sustained ~21A — 4.2× rating — clears predictably, in the order
+  of 10–50ms. **The RSP-1000-48 improved this** over the originally specified RSP-750-48's
+  15.7A: more fault current into a fast-blow fuse means a shorter clearing time, so the
+  node sits behind the crowbar for less of it. The cost is an SCR that must carry 21A
+  rather than 15.7A for that window — a selection criterion, not a problem.
 - Had it been **hiccup** mode, the PSU would have pulsed on and off, the fuse would have
   seen an intermittent current with long cooling gaps, and clearing time would have become
   indeterminate — the fuse might never clear while the node sat behind a repeatedly-firing
@@ -533,23 +573,48 @@ The front-panel latching button drives the **PSU's remote ON/OFF input** rather 
 switching 48V through a FET. This avoids commutating ~15A and eliminates upstream's
 master-FET entirely — an option upstream did not have with the HRP-300.
 
-**OPEN-4 — RESOLVED.** The RSP-750 series has **built-in remote ON/OFF control, a DC OK
-signal, remote sense, and a 12V auxiliary output.** Remote ON/OFF is wired on connector
-CN50: shorting **pin 13 (Remote ON/OFF) to pin 14 (12V-AUX)** turns the output on, opening
-it turns the output off. The front-panel latching button does exactly this. No AC-side
-relay, no master FET, no 15A commutation anywhere in the design.
+**OPEN-4 — RESOLVED.** The RSP-1000-48 has **built-in remote ON/OFF control, a DC OK
+signal, remote sense, and a 5V auxiliary output**, all on connector **CN50** (Hirose
+DF11-12DP-2DS, 12-pin; the mating DF11-12DS-2C and its crimps are a BOM line).
 
-Three further consequences, all favourable:
+Remote ON/OFF is a **dry contact between CN50 pin 6 (on/off) and pin 2 (−S)**: shorted
+turns the output on, open turns it off. The front-panel latching button does exactly this.
+No AC-side relay, no master FET, no 15A commutation anywhere in the design.
 
-- **The 12V auxiliary output powers the control board and the display directly from the
-  PSU**, independent of the six buck channels. The MCU therefore stays alive — and
-  telemetry keeps reporting — even with every output channel disabled or faulted. This
-  removes what would otherwise have been an awkward housekeeping-supply problem.
-- **The DC OK signal satisfies S-6** as a plain GPIO input. No extra hardware.
-- Output current is trimmable 40–110% via an external DC signal. Not used, but it means
-  the bus current limit can be *lowered* during bring-up to make early faults gentler.
+> **Note the pinout differs from the RSP-750 series**, which uses pin 13 to pin 14. If you
+> have the RSP-750 wiring in your head from an earlier draft of this document, discard it.
+
+**The DC OK signal satisfies S-6** as a plain GPIO input, no extra hardware. Output current
+is trimmable 40–110% via an external DC signal — not used in normal operation, but it means
+the bus current limit can be *lowered* during bring-up to make early faults gentler (R-0
+control 8).
+
+##### The auxiliary rail is not used, and that is deliberate
+
+The RSP-1000-48's aux output is **5V at 0.5A — 2.5W**. Earlier drafts, written against the
+RSP-750's 12V aux, planned to run the control board and display from it. That does not work
+here, for two independent reasons:
+
+1. **It is too small.** ESP32-S3 (~0.4W) + W5500 (~0.45W) + display with backlight (~0.75W)
+   + six INA226s + the LED expander comes to roughly **2.0W of the 2.5W available — 80%**,
+   which is the derating limit (T-2), not a margin.
+2. **The fans need 12V regardless.** Three NF-A4x20 PWM cannot run from a 5V rail at all.
+
+**Housekeeping therefore comes from the 48V bus**, via a small **LM5164** (100V input, 1A,
+integrated FET) producing 12V for the fans, and a second stage producing 5V for the logic.
+
+This is not a compromise — it is better than the original plan. The property the aux rail
+was wanted for was *"the MCU stays alive and telemetry keeps reporting even with every
+output channel disabled or faulted."* **The 48V bus is live whenever the PSU is on,
+independently of whether any channel is enabled**, so it provides exactly that property
+with an order of magnitude more current available. The aux rail is brought to a header and
+left unpopulated, available as a standby feed if a use for it ever appears.
 
 #### 4.5.4 MCU and connectivity
+
+**Housekeeping supply** (see §4.5.3): 48V bus → LM5164 → 12V/1A → fans; 12V → 5V/1A →
+logic. Estimated draw ~2.0W. The control board is therefore alive whenever the PSU is on,
+regardless of the state of any output channel.
 
 **ESP32-S3** with **W5500** SPI Ethernet (S-1). GPIO budget: 6 enable + 2 I²C + 4 SPI +
 3 fan PWM + 3 tach + 1 button + 3 NTC ADC ≈ 22, plus status LEDs via an I²C expander to
@@ -699,7 +764,7 @@ is switched off before it is unplugged.
 
 Qty-10 distributor pricing, indicative, to be verified against live stock.
 
-**Per channel ≈ $27:** LM5116 $5.13 · FETs ×2 $1.80 · inductor $3.50 · INA226 $2.50 ·
+**Per channel ≈ $27:** LM5116 $1.31 (LCSC, verified) · FETs ×2 $1.80 · inductor $3.50 · INA226 $2.50 ·
 sense + shunt $1.30 · output caps $4.80 · input caps $3.00 · OVP + crowbar $1.20 ·
 fuse + TVS $1.45 · passives $0.60 · barrel jack $2.00.
 
@@ -714,7 +779,7 @@ fuse + TVS $1.45 · passives $0.60 · barrel jack $2.00.
 | Wiring, connectors | $25 |
 | 6× 18AWG locking interconnect cables (§4.8.1) | $30 |
 | **Electronics** | **~$450** |
-| RSP-750-48 | ~$165 |
+| RSP-1000-48 | ~$245 |
 | Fans, IEC, button | ~$65 |
 | Sheet metal, printed panels, fasteners | ~$120 |
 | **Total per unit** | **~$780–860** |
@@ -741,11 +806,12 @@ be the actual reason.
 | OPEN-1 | LM5116 + discretes vs integrated FETs | ✅ **Closed** | **LM5116 + discretes.** Integrated fails on package thermals (§4.3.1.1) |
 | OPEN-2 | Inductor saturation rating | ✅ **Closed** | **Coilcraft XAL1510-223**, I_sat 18.7A = 2.3× margin (§4.3.2.1) |
 | OPEN-3 | Crowbar/fuse coordination vs PSU overcurrent | ✅ **Closed** | Constant-current limiting — the favourable case (§4.4.2) |
-| OPEN-4 | RSP-750-48 remote ON/OFF | ✅ **Closed** | Built in, plus DC OK, remote sense and a 12V aux rail (§4.5.3) |
+| OPEN-4 | RSP-1000-48 remote ON/OFF | ✅ **Closed** | Built in, plus DC OK, remote sense and a 12V aux rail (§4.5.3) |
 | R-7 | 19V from an integrated regulator | ✅ **Closed** | Voltage was never the issue; thermals were. Merged into OPEN-1 |
 | **OPEN-5** | **Barrel jack dimensions** | 🔴 **Open — needs you** | Physical caliper measurement. Gates all mechanical work |
-| **OPEN-6** | **Real six-node peak power draw** | 🔴 **Open — needs you** | ~$20 energy meter, one evening. Validates §4.2 |
-| **R-0** | **Independent schematic + layout review** | 🔴 **Open — your decision** | Now **mandatory**, not advisory (§4.3.1.1) |
+| **OPEN-6** | **Real six-node peak power draw** | 🟡 **Open — informational** | Was a gate against a 753.6W supply. At 1008W the design absorbs a reading 38% above estimate, so this now validates §4.2 rather than blocking it |
+| **R-0** | **Independent schematic + layout review** | 🔴 **Accepted, not resolved** | Declined. Compensating controls in §7 carry the full weight (§4.3.1.1) |
+| OPEN-7 | PSU discontinued | ✅ **Closed** | RSP-1000-48 EOL → **RSP-1000-48**, which also closes R-3 (§4.2.3) |
 
 **Everything that could be closed from datasheets has been closed.** The three remaining
 items are a physical measurement, a physical measurement, and a decision — none of which
@@ -790,7 +856,7 @@ more demanding than the first draft, because it is now the only thing there is.
 | 5 | **72-hour burn-in into dummy loads before any node connects** | Time only | Latent defects — marginal solder, an over-stressed part — surface under sustained heat, not in a 30-minute test |
 | 6 | **Re-run fault injection *after* burn-in** | Time only | Confirms protection still works on a thermally-aged board, not just a fresh one |
 | 7 | **30-day canary on one worker node** (§9.4) | Time only | **The most valuable control here.** It converts the worst case from "six nodes die" to "one worker dies", and buys a month for latent faults to appear |
-| 8 | **Trim the PSU current limit down during bring-up** | Free | RSP-750 output current is trimmable to 40% (§4.5.3). Early faults are gentler |
+| 8 | **Trim the PSU current limit down during bring-up** | Free | RSP-1000-48 output current is trimmable to 40% (§4.5.3). Early faults are gentler |
 
 > **Residual risk is accepted and non-trivial.** Controls 3, 5, 6 and 7 are the ones that
 > matter most; 7 in particular is what stops a latent design error from being a
@@ -843,24 +909,32 @@ electrical noise, or instability that no amount of schematic review would have c
 spins, not one** — a first-time high-current layout that works on the first attempt is
 luck, not planning. Plan the schedule and the money around three.
 
-### R-3 — 750W proves marginal · **Medium**
+### R-3 — the supply proves marginal · **CLOSED at WP-3**
 
 **Plain terms:** the power supply might run out of headroom under real load.
 
-**Cost:** low. A $165 part swap into a chassis already sized for it.
+**This risk existed because the RSP-750-48 was a 753.6W supply carrying a 726W peak —
+96% of its rating.** Sourcing found that unit discontinued, and its replacement changed
+the arithmetic rather than preserving it:
 
-**How it is closed — and this one you can settle this week, before anything is designed:**
+| | Was (RSP-1000-48) | Now (RSP-1000-48) |
+|---|---|---|
+| Capacity | 753.6W | 1008W |
+| Peak load | **96%** | **72%** |
+| Headroom before the question reopens | none | a measurement **38% above** the estimate |
 
-> **Buy a plug-in energy meter (~$20). Plug your existing six bricks into it one at a
-> time, or all six through a power strip. Run your actual workloads, then run
-> `stress-ng --cpu 0` on all six simultaneously. Record the peak.**
+**Closed.** 72% is not a marginal operating point. The chassis was already dimensioned for
+this exact unit under M-2, so closing the risk cost nothing but the price difference.
 
-That single evening replaces every third-party figure in §4.2.1 with a measurement of
-*your* nodes running *your* workloads. It is the cheapest, highest-value action in this
-entire document and it costs nothing but an evening. **Do it first regardless of which
-architecture is chosen.** If your real all-six peak is 500W, the headroom question
-disappears; if it is 850W, the RSP-750 was never viable and you have learned that for $20
-instead of $165.
+**The measurement is still worth taking**, and it is still the only real evidence behind
+§4.2.1 — every figure there is third-party. But it is now **informational rather than a
+gate**:
+
+> Buy a plug-in energy meter (~$20). Run all six nodes through a power strip on real
+> workloads, then `stress-ng --cpu 0` on all six simultaneously. Record the peak.
+
+An evening's work that replaces five third-party numbers with your own. Do it — just not
+before you can order parts.
 
 ### R-4 — A firmware fault drops node power · **High if unmitigated**
 
@@ -903,7 +977,7 @@ Stage-gated. **Do not order the full board set before stage 3 passes.**
 
 | # | Stage | Gate to clear before proceeding |
 |---|---|---|
-| 0 | **Your two measurements** — barrel jack with calipers (OPEN-5), six-node peak draw with an energy meter (OPEN-6) | Both recorded. ~$20 and one evening |
+| 0 | **Barrel jack measured with calipers** (OPEN-5). Six-node draw (OPEN-6) is now informational — take it, but it no longer gates | OPEN-5 recorded |
 | 1 | **Schematic** — LM5116 channel, protection, control board, backplane | — |
 | 2 | **Sourcing** — full BOM, live stock, live pricing | No unsourceable parts |
 | 3 | **LM5116 evaluation board** — buy, build, measure (R-0 control 2) | A working reference exists to compare against |
@@ -936,8 +1010,8 @@ carry the risk R-0 would otherwise have been reviewed out of.**
 | Thermal | T-2 | 30-min soak at 7A, IR camera on FETs, inductor, sense resistor |
 | Telemetry | F-3 | INA226 vs bench meter at 1A / 4A / 7A |
 
-Powered from a **current-limited bench supply**, not the RSP-750, so a fault cannot
-deliver 750W into a mistake.
+Powered from a **current-limited bench supply**, not the RSP-1000-48, so a fault cannot
+deliver 1000W into a mistake.
 
 **Deliberate fault injection — run the full set twice: once on the fresh board, and again
 after the 72-hour burn-in.** A protection circuit that works cold and fails on a
@@ -974,7 +1048,7 @@ repeat everything above.
 ### 9.3 Stages 5–6 — single-node integration
 
 - One MS-01 powered from the **bench supply** through a full boot and a `stress-ng` run,
-  before the RSP-750 is ever in the path
+  before the RSP-1000-48 is ever in the path
 - Remote power cycle brings that node back through POST cleanly (F-2)
 - Chassis assembled, fans and display in place, 24-hour soak at that node's typical load
   while monitoring T-1 and T-2
@@ -1009,7 +1083,7 @@ Only on a clean thirty days do the other five nodes move across.
 ### 9.5 Stage 8 — full cluster
 
 - Remaining five nodes moved across only after a clean canary month
-- Six nodes on the RSP-750-48; log aggregate draw through synchronised `stress-ng` across
+- Six nodes on the RSP-1000-48; log aggregate draw through synchronised `stress-ng` across
   all six — **this is the empirical answer to §4.2.2** and determines whether the
   RSP-1000-48 swap is warranted
 - Remote power cycle verified on every node (F-2)
@@ -1217,7 +1291,8 @@ Follows §8 stages 3–8 and §9 exactly. **This is where the two placeholders m
 resolved**, because they become purchasing decisions:
 
 - Measure the barrel jack → update `params.yaml` → confirm the ordered part
-- Measure six-node draw → update `params.yaml` → confirm RSP-750 vs RSP-1000
+- Measure six-node draw → update `params.yaml`. **No longer a purchasing gate** (R-3 closed);
+  it validates §4.2.1 and informs whether a second unit is ever warranted
 
 ### 11.3 Sequencing
 

@@ -16,8 +16,16 @@ control + display                    ≈  2W
 total inside the chassis             ≈ 38W
 ```
 
-**The PSU's own ~60W of loss is not in this budget.** The RSP-750-48 has its own
-fan and exhausts its own heat. Do not obstruct it, and do not count it twice.
+**The PSU's own ~72W of loss is not in this budget.** The RSP-1000-48 has its own
+fan and exhausts its own heat through its own airflow path. Do not obstruct it,
+and do not count it twice.
+
+> **This is why the fanless UHP-750-48 was rejected** (`power-budget.md` §3).
+> A conduction-cooled unit has no such path: its ~38W conducts into whatever it is
+> bolted to, which is the chassis, roughly **doubling** the 38W budget above and
+> the 4.5 CFM requirement below. On a first build where the thermal design is
+> calculated rather than measured, doubling the load on the one thing you have not
+> verified is a bad trade for 3% efficiency.
 
 ## 2. Airflow required
 

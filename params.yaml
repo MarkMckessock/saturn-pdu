@@ -91,18 +91,45 @@ power_budget:
 # 48V bus and PSU
 # -----------------------------------------------------------------------------
 psu:
-  model: Mean Well RSP-750-48
-  upgrade_drop_in: Mean Well RSP-1000-48
+  # CHANGED from RSP-750-48 at WP-3 sourcing: the RSP-750-48 is DISCONTINUED.
+  # The RSP-1000-48 is an active product, fits the chassis this design was
+  # already dimensioned for, and drops the peak load from 96% to 72% of rating
+  # -- which closes risk R-3 outright and downgrades OPEN-6 from a hard gate
+  # to informational. See docs/power-budget.md section 3.
+  model: Mean Well RSP-1000-48
+  status: active
   output_v: 48.0
-  output_a: 15.7
-  output_w: 753.6
-  efficiency: 0.92
+  output_a: 21.0
+  output_w: 1008.0
+  efficiency: 0.91
+  load_at_design_point: 0.72             # 726W of 1008W
+  size_mm: [295, 127, 41]
   overload_behaviour: constant_current   # the favourable case for crowbar/fuse coordination
-  # Connector CN50: pin 13 (Remote ON/OFF) shorted to pin 14 (12V-AUX) = output ON
+  # Control connector CN50 -- Hirose DF11-12DP-2DS header, 12-pin.
+  # Mating half required in the BOM: DF11-12DS-2C + DF11-2428SCF crimps.
   remote_onoff: true
-  dc_ok_signal: true
-  aux_12v_rail: true                     # powers control board + display independently
+  remote_onoff_pins: "CN50 pin 6 (on/off) to pin 2 (-S)"   # dry contact: shorted = ON
+  dc_ok_signal: true                     # CN50; satisfies S-6 as a plain GPIO input
+  remote_sense: true
+  # NOTE: the aux rail is 5V/0.5A on this unit, NOT the 12V the RSP-750 carries.
+  # 2.5W is too tight to run the control board, display and fans from, and the
+  # fans need 12V regardless. Housekeeping therefore comes from the 48V bus --
+  # see control.housekeeping. The aux is wired to a header and left unused.
+  aux_rail_v: 5.0
+  aux_rail_a: 0.5
+  aux_rail_used: false
   current_trim_range: [0.40, 1.10]       # trim DOWN during bring-up for gentler faults
+
+  superseded:
+    # Recorded so the decision is not re-litigated.
+    - model: Mean Well RSP-750-48
+      why_rejected: "Discontinued. 726W peak = 96% of its 753.6W rating, leaving
+        R-3 open and making OPEN-6 a hard gate before ordering."
+    - model: Mean Well UHP-750-48
+      why_rejected: "Active and genuinely better on paper -- 95% efficient and
+        fanless, which would have helped the 35 dBA target. Rejected on a 17-week
+        lead time, and because being fanless makes its ~38W of loss the chassis's
+        problem rather than its own, roughly doubling the airflow requirement."
 
 bus:
   voltage_v: 48.0
@@ -203,9 +230,9 @@ chassis:
   component_height_max_mm: 40     # (M-6) 41mm PSU in a 43mm envelope
   print_bed_max_mm: 220           # (M-5) keeps panels home-printable
   board_mount_hole_mm: 3.0        # NPTH, 4x -- inherited from upstream
-  # Dimensioned for the LARGER unit so the RSP-1000-48 drops in (M-2)
+  # The RSP-1000-48 is now the fitted unit, not the upgrade path. The envelope
+  # is unchanged -- it was already dimensioned for exactly this.
   psu_envelope:
-    rsp_750_mm: [250, 127, 41]
     rsp_1000_mm: [295, 127, 41]
     design_to: rsp_1000_mm
     orientation: long_axis_across_rack_width
@@ -228,7 +255,7 @@ display:
   diagonal_in: 1.9
   module_size_mm: [60.8, 25.5]
   separate_device: true           # F-9
-  power_rail: psu_aux_12v
+  power_rail: housekeeping_5v
   link: uart
   # F-9: a single tap can never de-energise anything.
   power_action_requires: select_then_hold
@@ -239,6 +266,23 @@ display:
 # Control and connectivity
 # -----------------------------------------------------------------------------
 control:
+  # Housekeeping supply. NOT the PSU aux rail -- see psu.aux_rail_used.
+  # Fed from the 48V bus, which is live whenever the PSU is on, independently of
+  # whether any output channel is enabled. That is the property the aux rail was
+  # wanted for, and the bus provides it with far more current available.
+  housekeeping:
+    source: 48v_bus
+    rail_12v:
+      controller: TI LM5164            # 100V input, 1A, integrated FET
+      output_v: 12.0
+      output_a: 1.0
+      loads: [fans_x3, rail_5v]
+    rail_5v:
+      output_v: 5.0
+      output_a: 1.0
+      loads: [esp32_s3, w5500, display, ina226_x6, led_expander]
+    estimated_draw_w: 2.0              # would have been ~80% of the 2.5W aux rail
+
   mcu: ESP32-S3
   ethernet: W5500                 # wired, not WiFi (S-1)
   firmware: esphome

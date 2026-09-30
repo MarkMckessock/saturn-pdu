@@ -45,17 +45,24 @@ milliseconds and makes it permanent. Neither works alone.
 ### Fuse coordination
 
 Fault path: `48V → shorted HS FET → inductor → SCR → ground`, current-limited by
-the PSU at ~15.7A (trimmable to 110%).
+the PSU at ~21A (trimmable to 110%).
 
-A 5A fast-blow fuse seeing a sustained ~15A — **3× rating** — clears in the order
-of 100ms. The SCR must be rated to carry that current for that duration.
+A 5A fast-blow fuse seeing a sustained ~21A — **4.2× rating** — clears in the order
+of 10–50ms. The SCR must be rated to carry that current for that duration.
+
+> **The RSP-1000-48 substitution made this better, not worse.** The original
+> RSP-750-48 limited at 15.7A, i.e. 3× the fuse rating. More fault current into a
+> fast-blow fuse means a *shorter* clearing time, so the node sits behind the
+> crowbar for less time. The cost is that the SCR must carry 21A rather than 15.7A
+> for that window — a selection criterion, not a problem, and the window is
+> shorter.
 
 **This depends on the PSU's overload behaviour, which was checked.** The
-RSP-750-48 specifies **constant-current limiting**, which is the favourable case:
+RSP-1000-48 specifies **constant-current limiting**, which is the favourable case:
 
 | PSU behaviour | Effect on fuse clearing |
 |---|---|
-| **Constant current** (RSP-750-48) | PSU *holds* ~15.7A. Fuse sees a sustained 3× overload. Clears predictably in ~100ms |
+| **Constant current** (RSP-1000-48) | PSU *holds* ~21A. Fuse sees a sustained 4.2× overload. Clears predictably in ~10–50ms |
 | Hiccup | PSU pulses on and off. Fuse sees intermittent current with cooling gaps between pulses. **Clearing time becomes indeterminate** — the fuse might never clear, leaving the node behind a repeatedly-firing crowbar |
 | Shutdown/latch | Whole bus drops. All six nodes lost to one channel's fault |
 

@@ -82,6 +82,7 @@ starting empty-and-wrong.
 | D-4 | EVM has no telemetry | **INA226 on each output** | F-3 | Low. Advisory only; nothing switches on a reading |
 | D-5 | EVM is a single channel on its own board | **Two channels per board, three boards** | Panelisation, cheap field swap, contained thermal problems | Shared input node between two channels — check the bus-sag ride-through case (protection.md §2) |
 | D-6 | EVM enable is a simple pin | **UVLO divider holds enable ON; MCU pulls down via open-drain** | F-5/S-4: fail-ON is a hard requirement | Low, and it fails in the safe direction |
+| D-7 | Housekeeping supply taken from a PSU auxiliary rail | **48V bus → LM5164 → 12V/1A → fans; 12V → 5V/1A → logic** | The RSP-1000-48's aux is 5V/0.5A. At ~2.0W estimated draw that is 80% of it — the derating limit, not a margin — and the fans need 12V regardless | Low. The 48V bus is live whenever the PSU is on, independently of any channel's state, which is the exact property the aux rail was wanted for |
 
 **D-3 deserves emphasis.** It is not a deviation from the reference — it is
 circuitry the reference does not contain in any form. There is no published

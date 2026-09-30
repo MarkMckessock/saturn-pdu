@@ -24,7 +24,7 @@ One 1U box: a single mains inlet, six 19V outputs, each switchable over the
 network and each reporting volts, amps and watts.
 
 ```
-IEC inlet ──► RSP-750-48 ──► 48V bus ──┬──► [2ch board A] ──► ports 1,2
+IEC inlet ──► RSP-1000-48 ──► 48V bus ─┬──► [2ch board A] ──► ports 1,2
                   ▲                     ├──► [2ch board B] ──► ports 3,4
            remote ON/OFF                └──► [2ch board C] ──► ports 5,6
            (front button)                          │
@@ -109,7 +109,7 @@ values in `params.yaml` and neither blocks design work.
 | ID | Item | Why it does not block |
 |---|---|---|
 | OPEN-5 | Barrel jack dimensions | Both candidate sizes share the same 8mm panel thread, so the panel cutout is identical. Only the part number is provisional |
-| OPEN-6 | Real six-node peak draw | The chassis is dimensioned for the larger RSP-1000-48 regardless, so this changes a purchase, not a layout |
+| OPEN-6 | Real six-node peak draw | **Downgraded to informational.** The fitted RSP-1000-48 absorbs a reading 38% above estimate, so this validates the power budget rather than gating a purchase |
 | R-0 | No independent design review | **Accepted, not resolved.** Bench testing and the 30-day canary stand in for it. Residual risk is moderate and knowingly taken |
 
 ## Contributing
