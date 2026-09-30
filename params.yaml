@@ -139,6 +139,8 @@ psu:
   aux_rail_a: 0.5
   aux_rail_used: false
   current_trim_range: [0.40, 1.10]       # trim DOWN during bring-up for gentler faults
+  output_voltage_trim: locked_at_48v      # NEVER trim up (range reaches ~56V): the buck FETs are
+                                         # 60V parts (D-10). Headroom is for switch-node spikes only.
 
   superseded:
     # Recorded so the decision is not re-litigated.

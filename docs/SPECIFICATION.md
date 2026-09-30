@@ -1053,6 +1053,7 @@ carry the risk R-0 would otherwise have been reviewed out of.**
 | Regulation | E-1 | 19.0V ±2%, no load → 7A |
 | Ripple | E-3 | ≤200 mVpp on a scope at 7A |
 | Transient | E-7 | 0→7A load step, recovery within bounds |
+| **Switch-node spike** | D-10 | 🔴 **Hard gate.** At 7A, measure the switch node and each FET drain–source on a scope (≥200MHz, short ground spring, not the clip lead). Peak must stay **≤54V (90% of the 60V FET rating)**. Tune the DNP snubber if not; if tuning cannot achieve it, move to 80V FETs |
 | Efficiency | E-6 | ≥94% at 7A |
 | Thermal | T-2 | 30-min soak at 7A, IR camera on FETs, inductor, sense resistor |
 | Telemetry | F-3 | INA226 vs bench meter at 1A / 4A / 7A |
