@@ -1,0 +1,92 @@
+# NOTICE
+
+## Derivation
+
+This project is a derivative work of:
+
+    HomeLab-PDU-V1
+    Copyright (c) Shrike Lab
+    https://github.com/Shrike-Lab/HomeLab-PDU-V1
+    Licensed under CERN-OHL-S v2 (Strongly Reciprocal)
+
+`saturn-pdu` is licensed under the same terms. See `LICENSE`.
+
+This notice satisfies CERN-OHL-S v2 section 3.3 (modifications must be
+documented). `docs/upstream-analysis.md` records what was extracted from
+upstream and how.
+
+## Trademark
+
+CERN-OHL-S v2 section 7 grants no trademark rights. The **Shrike Lab** and
+**ShrikeLab** names, and the ShrikeLab logo, are **not** used by this project
+and have been removed from this repository. Their absence is deliberate.
+No endorsement by Shrike Lab is claimed or implied.
+
+## What this derivative changes
+
+Upstream is a 5-port USB-C Power Delivery distribution board fed from a 300W
+24V supply. It performs **no power conversion** -- it is a passive fan-out
+carrying one master switch, fusing, TVS clamping, bulk capacitance, and headers
+for five purchased PD modules and one purchased buck module.
+
+This derivative inverts that: **conversion is the board.** The reason is that
+the target load is incompatible with upstream's output. A Minisforum MS-01
+takes 19V through a barrel jack and cannot be powered over USB-C, so every
+USB-C PD module, the PD-specific board and the 24V rail are discarded.
+
+### Retained from upstream
+
+| Element | How it is used |
+|---|---|
+| 19" chassis geometry (`.stp` B-rep solids) | Dimensional reference, `reference/upstream-19in/` |
+| 4x 3.0mm NPTH board mounting pattern | Inherited directly |
+| Per-channel fuse + TVS + bulk capacitor pattern | Inherited, rescaled (3A -> 5A; TVS standoff 26V -> 58V bus / 24V output) |
+| Master switch via front-panel latching button | Concept inherited; implementation changed -- see below |
+| Fan rail derived from the switched main rail | Inherited, with MCU PWM control added |
+| CERN-OHL-S v2 licensing | Required, not optional |
+
+### Replaced or discarded
+
+| Element | Disposition |
+|---|---|
+| 24V rail, HRP-300-24 supply | Replaced by a 48V rail, Mean Well RSP-750-48 |
+| 5x XPM52C USB-C PD modules | Discarded -- the load cannot use them |
+| Passive fan-out power path | Replaced by 6x LM5116 synchronous buck channels, 48V -> 19V @ 7A |
+| Master high-side P-FET (15A commutation) | Replaced by the PSU's built-in remote ON/OFF (CN50 pin 13/14) |
+| 2-layer / 2oz / 15A stackup | Replaced by 4-layer, 2oz outer / 1oz inner |
+| 10" chassis variants | Removed -- out of scope |
+| Upstream gerbers, ODB++, BOM, schematic PDFs | Removed from the working tree. They remain available upstream and in this repository's git history; `docs/upstream-analysis.md` records what was extracted from them |
+
+### Added
+
+- Per-channel synchronous buck conversion (48V -> 19V, 7A)
+- Per-channel MCU-independent overvoltage protection with an SCR crowbar
+- Per-channel INA226 voltage / current / power telemetry
+- ESP32-S3 control board with wired Ethernet, Prometheus metrics and OTA
+- Front-panel colour touchscreen running as a separate, non-authoritative device
+- Parametric FreeCAD mechanical source
+
+## On editable source
+
+CERN-OHL-S v2 requires the **Source** -- the preferred form for making
+modifications. A census of all 149 files in upstream at the time of forking
+found no `.kicad_*`, `.f3d`, `.FCStd` or `.SLDPRT` files: only STEP/STL
+exports, Gerbers, ODB++ and PDFs. STEP headers show SolidWorks 2025; Gerber
+headers show KiCad 9.0.7, project "1U Minilab PSU V2". Both originals are
+withheld.
+
+Exports are not Source. This derivative publishes the KiCad projects and the
+parametric FreeCAD scripts, and treats the generated STEP/STL/Gerber files as
+what they are -- outputs.
+
+## Defect found in upstream
+
+Upstream's `Q1` is listed as `NCEP40PT15D` (N-channel, 40V) in the README BOM
+but as `IRF9540NPBF` (P-channel, 100V) in the JLCPCB `bom.csv`. These are
+opposite polarity and not interchangeable. The surrounding gate network --
+100k pull-up, 12V zener clamp, pulled low to turn on -- is unambiguously a
+P-channel high-side switch, so the CSV is correct and the README is wrong.
+Building from the README alone yields a non-functioning board.
+
+Reported here for the benefit of anyone else working from that repository.
+The affected circuit is not inherited by this derivative.

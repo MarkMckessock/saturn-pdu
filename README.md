@@ -1,192 +1,122 @@
-<div align="center">
-  <img alt="Shrike Lab logo"
-       src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/Logo/ShrikeLabCo_Footer_W_HiRes.png?raw=true"
-       height="100">
-  
-  [Website](https://www.shrikelab.co) | [YouTube](https://www.youtube.com/@ShrikeLab)
-  
-</div>
-<p align="center">
-  <a href="https://patreon.com/shrikelab">
-    <img src="https://img.shields.io/badge/Patreon-Support-FF424D?logo=patreon&logoColor=white&style=for-the-badge"/>
-  </a>
-  <a href="https://ko-fi.com/shrikelab">
-    <img src="https://img.shields.io/badge/Ko--fi-Support-29ABE0?logo=kofi&logoColor=white&style=for-the-badge"/>
-  </a>
-</p>
+# saturn-pdu
 
+**A 1U rack PDU delivering six independently switched and metered 19V outputs,
+for a six-node Minisforum MS-01 Kubernetes cluster.**
 
+> **Status: draft specification. Nothing here has been built or bench-verified.**
+> Every figure is analytical. Do not fabricate from this repository yet.
 
-# **ShrikeLab PDU V1** - 5 & 10 port USB-C PDUs for 10" and 19" racks
-These PSUs are power delivery solutions for micro PC clusters and homelabs that suits either 10" and 19" racks. All variants are built around a Meanwell HRP-300-24 featuring either 5 or 10 USB-C power delivery ports enclosed in sheet metal or 3D printed ABS/ASA housings. 
-
-<div align="center">
-  <a
-    href="https://www.Shrikelab.co" title="Kits and PCBs available now!">Kits and PCBs available now!
-  </a>  
-</div>
+Derived from [Shrike-Lab/HomeLab-PDU-V1](https://github.com/Shrike-Lab/HomeLab-PDU-V1).
+Licensed **CERN-OHL-S v2** (strongly reciprocal) -- see [`LICENSE`](LICENSE) and
+[`NOTICE`](NOTICE).
 
 ---
 
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/General/Stacked.png" width="100%" /> 
-</p>
+## The problem
 
-Mini and micro labs are a great solution for homelabbing, but the power delivery options are often bulky and hard to manage due to the need for an individual power brick per computer.
-This project helps fix this by consolidating power delivery for up to 10 65W micro PCs into a single unit that fits in either a 10" or 19" 1U rack. This differs from a conventional multi-port USB PD hub by not needing to re-negotiate any power delivery voltages when a unit is turned off or unplugged, or when the power load across ports changes drastically. Also the packaging is designed specifially for rack mounting, with active cooling and simple power switching.
+Six MS-01 nodes, six 180W bricks, six mains outlets, twelve cables, and no way
+to see what any node draws or to power-cycle a wedged one without walking to the
+rack.
 
-[**Design and build video here**](https://www.youtube.com/watch?v=8tTG0TBM7ts)
+## What this is
 
-[**Follow-up and testing video here**](https://www.youtube.com/watch?v=Ig7oZpujHtc&t)
+One 1U box: a single mains inlet, six 19V outputs, each switchable over the
+network and each reporting volts, amps and watts.
 
-<br>
+```
+IEC inlet ──► RSP-750-48 ──► 48V bus ──┬──► [2ch board A] ──► ports 1,2
+                  ▲                     ├──► [2ch board B] ──► ports 3,4
+           remote ON/OFF                └──► [2ch board C] ──► ports 5,6
+           (front button)                          │
+                                          [control board]
+                                          ESP32-S3 + wired Ethernet
+                                          6x INA226 telemetry
+                                          Prometheus /metrics
+```
 
-### Features:
-- Both 19" and 10" variants
-- Up to 10 x 65W USB-C outputs
-- 1U Height
-- Active cooling
-- Sheet metal housing or fully 3D printable
-- All variants built around a Meanwell HRP-300-24
-- All 3D printed parts fit on a 220x220mm print bed
+Each channel is an LM5116 synchronous buck, 48V down to 19V at 7A, with its own
+fuse, its own current limit, and its own overvoltage crowbar that works **with
+the microcontroller unpowered**.
 
-<br>
+## Three design rules that explain most of the decisions
 
-### Repo Content:
-- **Assembly** - Renders and references for main and sub-assemblies, plus bill of material for each variant
-  - **CAD** - CAD files for all varients, universal files and drawings of components
-    - **Universal** - Files thats are used for multiple variants
-    - 10in_Single
-    - 10in_Dual
-    - 10in_3D_Modular
-    - 10in_3D_Unibody
-    - 19in_Single
-    - 19in_Dual
-    - 19in_Dual_SBS
-    - **Blanks** - STP files for customisation
-    - **Universal** - STL and STP files that are used for multiple variants
-  - **Drawings** - Drawings of components and wiring
-    - **Electrical** - Harness pinouts and drawings of electronic components
-    -  **Hardware** - Drawings of hardware along with sheet metal engineering drawings
-- **IMG** - Images
-- **PCB** - PCB gerber manufacturing files
+1. **Outputs fail ON.** Channels are held on by resistors. The MCU can only turn
+   one *off*, by actively pulling a pin down. An MCU that is crashed,
+   unprogrammed, unpowered or physically removed leaves every node running.
+   No firmware path may ever de-energise an output autonomously.
+2. **Protection does not depend on software.** A shorted high-side transistor
+   puts 48V on a 19V input and destroys a node. Disabling its controller
+   achieves nothing when the transistor is a short, so each output carries an
+   SCR crowbar with its own reference, powered from its own output.
+3. **The display cannot break anything.** It is a separate device on a UART
+   link, not the controller. Unplug it and all six outputs keep running and stay
+   controllable over the network. A single tap can never de-energise a node.
 
-<br>
+## Honest cost comparison
 
-### Issues:
-There's a lot of ground to cover with this repo, so if you find an issue, please raise it with the GitHub issue system and it will get fixed. If you have questions about assembly or any of the variants, please make sure you have read through all the readme content before reaching out to save on time.
+About **$750-830** in parts, realistically **$900-1,100** for a first unit once
+you budget the three board spins a first high-current layout needs. Six stock
+bricks are $240-360.
 
-### ToDo:
-- Export all sheet metal STEP files in 1.2mm thickness for imperial
+A used switched-and-metered rack PDU (APC AP7921 class, $150-300) plugged into
+your existing bricks gives you remote switching and per-outlet metering this
+afternoon. **What this project buys over that is the 1U consolidation and the
+elimination of six bricks -- a space and elegance goal, not a functional one.**
+That is a fine reason to build it. It should just be the actual reason.
 
-# Variants:
-All variants are built around a Meanwell HRP-300-24 and the same PCB. The housings are designed to fit in 1U of space in either a 10in and 19in server rack. 
+## Safety
 
-## 10 Inch - Single:
-The original 10" enclosure, a sheet metal body + lid make up the housing, with a 3D printed front and rear. 5 outputs.
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in-Single/10in-Single-B.png" width="80%" /> 
-</p>
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in-Single/10in-Single-A.png" width="40%" /> 
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in-Single/10in-Single-C.png" width="40%" /> 
-</p>
+**Read [`docs/safety.md`](docs/safety.md) before building or operating.**
 
-[Bill of materials](https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/ASSEMBLY/README.md#10-inch---single)
+The short version: the 19V outputs cannot shock you (IEC 62368-1 ES1), but a
+live barrel plug dropped on a rack rail will melt itself. Unused ports stay off;
+switch a port off before unplugging it. The mains side inside the chassis *can*
+kill you -- unplug at the wall before opening the lid, and wait a minute.
 
-<br>
+## Repository layout
 
-## 10 Inch - 3D Printed - Unibody:
-10" printed unibody enclosure, made to be as easy as possible with minimal additional hardware, with the trade-off of being a little harder to print. No inserts required, all bolts thread directly into the print material. Small hatch for attaching button + fan and connecting wiring to PCB.
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in_3D_Unibody/10in_3D_Unibody-A.png" width="80%" /> 
-</p>
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in_3D_Unibody/10in_3D_Unibody-B.png" width="40%" /> 
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in_3D_Unibody/10in_3D_Unibody-C.png" width="40%" /> 
-</p>
+| Path | Contents |
+|---|---|
+| `params.yaml` | **Single source of truth.** Every dimension, rating and threshold used in more than one place. Docs, firmware and CAD all read from it |
+| `docs/` | Specification, power budget, thermal, protection/FMEA, safety, upstream analysis, deviation log |
+| `hardware/kicad/` | KiCad projects: 2-channel power board, control board, backplane |
+| `cad/` | Parametric FreeCAD Python, plus STEP/STL exports |
+| `firmware/` | ESPHome configuration for the control board and the display |
+| `fab/` | Gerbers, BOM, pick-and-place |
+| `reference/upstream-19in/` | Upstream's 19" B-rep solids, kept as dimensional reference |
 
-[Bill of materials](https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/ASSEMBLY/README.md#10-inch---3d-printed---unibody)
+## Build order
 
-<br>
+Stage-gated. **Do not order the full board set before stage 4 passes.**
 
-## 10 Inch - 3D Printed - Modular:
-10" printed enclosure, made to be more modular and mod-friendly but requires more M3 inserts and bolts to assebmle. The CAD folder for this variant also includes 'flipped' front and rear STLs that have the mounting tabs swapped, so that the USB-C ports and power intput will face the front of the rack instead of the rear.
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in_3D_Modular/10in_3D_Modular-A.png" width="80%" /> 
-</p>
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in_3D_Modular/10in_3D_Modular-B.png" width="40%" /> 
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in_3D_Modular/10in_3D_Modular-C.png" width="40%" /> 
-</p>
+| # | Stage | Gate |
+|---|---|---|
+| 0 | Measure the barrel jack and the real six-node draw | Both recorded |
+| 1-2 | Schematics, BOM and sourcing | No unsourceable parts |
+| 3 | LM5116 evaluation board, built and measured | A known-good reference exists |
+| 4 | One 2-channel board: bring-up, fault injection, 72h burn-in, fault injection **again** | **Hard gate** |
+| 5-6 | Control board, firmware, display, chassis | Fail-ON verified by pulling the MCU |
+| 7 | **30-day canary on one worker node** | **Hard gate.** Any event resets to day zero |
+| 8 | Remaining five nodes; control-plane nodes last | 24h six-node soak |
 
-[Bill of materials](https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/ASSEMBLY/README.md#10-inch---3d-printed---modular)
+Full detail in [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md) sections 8 and 9.
 
-<br>
+## Open items
 
-## 10 Inch - Dual:
-10" enclosure for external PSU's. 10 outputs, intended for use with alternative power sources like battery or solar, or for up-cycling external 300W PSUs.
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in-Dual/10in-Dual-B.png" width="80%" /> 
-</p>
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in-Dual/10in-Dual-A.png" width="40%" /> 
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/10in-Dual/10in-Dual-C.png" width="40%" /> 
-</p>
+Two measurements and one accepted risk. Both measurements carry provisional
+values in `params.yaml` and neither blocks design work.
 
-[Bill of materials](https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/ASSEMBLY/README.md#10-inch---dual)
+| ID | Item | Why it does not block |
+|---|---|---|
+| OPEN-5 | Barrel jack dimensions | Both candidate sizes share the same 8mm panel thread, so the panel cutout is identical. Only the part number is provisional |
+| OPEN-6 | Real six-node peak draw | The chassis is dimensioned for the larger RSP-1000-48 regardless, so this changes a purchase, not a layout |
+| R-0 | No independent design review | **Accepted, not resolved.** Bench testing and the 30-day canary stand in for it. Residual risk is moderate and knowingly taken |
 
-<br>
+## Contributing
 
-## 19 Inch - Single:
-19" inch version of 5 output variant. Additional space could be used for cable / tiny-mini-micro storage.
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-Single/19in-Single-B.png" width="80%" /> 
-</p>
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-Single/19in-Single-A.png" width="40%" /> 
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-Single/19in-Single-C.png" width="40%" /> 
-</p>
+This is a personal homelab project, not a product. Issues and observations are
+welcome -- particularly from anyone with power-electronics experience, given
+R-0. Pull requests are not expected.
 
-[Bill of materials](https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/ASSEMBLY/README.md#19-inch---single)
-
-<br>
-
-## 19 Inch - Dual:
-19" with 10 outputs from 2 x internal assemblies.
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-Dual/19in-Dual-B.png" width="80%" /> 
-</p>
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-Dual/19in-Dual-A.png" width="40%" /> 
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-Dual/19in-Dual-C.png" width="40%" /> 
-</p>
-
-[Bill of materials](https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/ASSEMBLY/README.md#19-inch---dual)
-
-<br>
-
-## 19 Inch - SBS:
-For people that couldn't possibly deal with a power input in the middle of the housing, this version has matching components side-by-side so inputs and outputs can be coordinated easier. One harness will require extending due to the layout.
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-SBS/19in-SBS-B.png" width="80%" /> 
-</p>
-<p float="center">
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-SBS/19in-SBS-A.png" width="40%" /> 
-  <img src="https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/Images/19in-SBS/19in-SBS-C.png" width="40%" /> 
-</p>
-
-[Bill of materials](https://github.com/Shrike-Lab/MiniLab-PSU/blob/main/ASSEMBLY/README.md#19-inch---dual---sbs)
-
-<br>
-
-# Disclaimer:
-
-If you build, modify, or use this project, you do so entirely at your own risk. The author provides these files without any warranty or guarantee of safety, reliability, or fitness for any particular purpose, and accepts no liability for any damage, injury, loss, or other consequences resulting from their use.
-
-# License:
-This project is licensed under the CERN Open Hardware Licence Version 2 - Strongly Reciprocal (CERN-OHL-S v2).
-You may use, study, modify, and distribute this design and its documentation, provided that any derivatives are licensed under the same terms. Source design files must be made available to anyone who receives the hardware or design files.
-
-Learn more about the license at [ohwr.org](https://ohwr.org).
-
+Derivatives must remain under CERN-OHL-S v2 and must publish editable source,
+not only exports. Upstream arguably does not; this repository tries to.

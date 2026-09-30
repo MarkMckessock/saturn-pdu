@@ -1,0 +1,250 @@
+# =============================================================================
+# saturn-pdu / params.yaml
+# -----------------------------------------------------------------------------
+# SINGLE SOURCE OF TRUTH for every dimension, rating and threshold that appears
+# in more than one place. Documentation, ESPHome firmware and the FreeCAD
+# scripts all read from this file. Change a value here, not in three places.
+#
+# Values marked PROVISIONAL are placeholders standing in for a measurement that
+# has not been taken yet. Each carries the OPEN-n item it belongs to. They are
+# tracked as GitHub issues and are re-checked as gates at WP-8 (before anything
+# is ordered) -- see docs/SPECIFICATION.md section 11.1.
+#
+# Licence: CERN-OHL-S v2. See LICENSE and NOTICE.
+# =============================================================================
+
+meta:
+  project: saturn-pdu
+  spec_version: "0.1"
+  spec_status: draft-pre-review     # nothing here has been built or bench-verified
+  license: CERN-OHL-S-2.0
+
+# -----------------------------------------------------------------------------
+# The load: six Minisforum MS-01 nodes
+# -----------------------------------------------------------------------------
+load:
+  node_model: Minisforum MS-01
+  node_count: 6
+  input_voltage_v: 19.0
+  # Nameplate is the stock brick (Huntkey HKA18019095-6C). The design is NOT
+  # sized to this -- see power_budget. Recorded for reference only.
+  nameplate_v: 19.0
+  nameplate_a: 9.47
+  nameplate_w: 180
+
+# -----------------------------------------------------------------------------
+# OPEN-5 -- output connector. Gates the rear panel cutout and the jack part No.
+#
+# Why this is safe to defer: 5.5x2.5mm and 5.5x2.1mm barrel jacks share the same
+# 8mm panel-mount thread, so panel_thread_mm (the only value the CAD needs) is
+# NOT provisional. Only the purchased part number depends on the measurement.
+# Risk if the placeholder is wrong: one incorrect ~$2 part.
+#
+# To close: measure the stock MS-01 plug with calipers -> update the three
+# PROVISIONAL values below -> confirm the jack part number at WP-8.
+# -----------------------------------------------------------------------------
+output_connector:
+  type: barrel_jack
+  outer_diameter_mm: 5.5          # PROVISIONAL (OPEN-5)
+  inner_diameter_mm: 2.5          # PROVISIONAL (OPEN-5) -- 2.1 is the other candidate
+  polarity: centre_positive       # PROVISIONAL (OPEN-5)
+  panel_thread_mm: 8.0            # NOT provisional -- identical for both candidates
+  current_rating_min_a: 10        # a 7A jack runs warm; specify >=10A, not a generic part
+  locking: true                   # threaded-collar (Switchcraft S760K class), not friction-fit.
+                                  # Prevents the accidental disconnection that leaves a live
+                                  # plug dangling -- see docs/safety.md
+
+# Interconnect: PDU rear jack -> MS-01 DC input. Six required.
+# The stock Huntkey brick's cable is CAPTIVE, so it cannot be reused: these are
+# new leads with a barrel plug at BOTH ends.
+interconnect_cable:
+  count: 6
+  length_mm: 500
+  conductor_awg: 18               # NOT a guess: at 7A over a 0.5m run (1m round trip)
+                                  # 18AWG drops ~0.15V / ~1.0W. 22AWG -- what most cheap
+                                  # DC extension leads actually are -- drops ~0.37V / ~2.6W.
+                                  # Specify the gauge; do not buy on price.
+  voltage_drop_v: 0.15            # at 18AWG, 0.5m, 7A
+  both_ends_locking: false        # only the PDU end can lock; the MS-01 jack is friction-fit
+
+# -----------------------------------------------------------------------------
+# OPEN-6 -- real six-node power draw. Third-party figures, not measured here.
+#
+# Why this is safe to defer: the chassis is dimensioned for the RSP-1000-48
+# regardless (see chassis.psu_envelope), so a higher measurement changes a
+# purchase, not a layout. Risk if wrong: a ~$165 PSU swap into a chassis that
+# already fits it.
+#
+# To close: ~$20 plug-in energy meter, all six nodes through a power strip,
+# run the real workload then `stress-ng --cpu 0` on all six. Record the peak.
+# -----------------------------------------------------------------------------
+power_budget:
+  per_node_idle_linux_w: 13       # PROVISIONAL (OPEN-6) -- cloudmagazin, tuned Linux
+  per_node_idle_windows_w: 28     # PROVISIONAL (OPEN-6) -- ServeTheHome, 25-30W
+  per_node_sustained_w: 95        # PROVISIONAL (OPEN-6) -- ServeTheHome, 90-95W
+  per_node_turbo_w: 115           # PROVISIONAL (OPEN-6) -- first ~45s of turbo
+  aggregate_design_w: 690         # PROVISIONAL (OPEN-6) -- derived: 6 x turbo
+  channel_efficiency_design: 0.95 # held at 95%, not the 97.4% the loss model gives
+  bus_draw_at_design_w: 726       # derived: aggregate_design_w / channel_efficiency_design
+
+# -----------------------------------------------------------------------------
+# 48V bus and PSU
+# -----------------------------------------------------------------------------
+psu:
+  model: Mean Well RSP-750-48
+  upgrade_drop_in: Mean Well RSP-1000-48
+  output_v: 48.0
+  output_a: 15.7
+  output_w: 753.6
+  efficiency: 0.92
+  overload_behaviour: constant_current   # the favourable case for crowbar/fuse coordination
+  # Connector CN50: pin 13 (Remote ON/OFF) shorted to pin 14 (12V-AUX) = output ON
+  remote_onoff: true
+  dc_ok_signal: true
+  aux_12v_rail: true                     # powers control board + display independently
+  current_trim_range: [0.40, 1.10]       # trim DOWN during bring-up for gentler faults
+
+bus:
+  voltage_v: 48.0
+  fuse_a: 20
+  tvs_standoff_v: 58
+
+# -----------------------------------------------------------------------------
+# Buck channel -- six identical channels, two per power board
+# -----------------------------------------------------------------------------
+channel:
+  count: 6
+  boards: 3
+  channels_per_board: 2
+  controller: TI LM5116
+  v_out: 19.0
+  v_out_tolerance: 0.02           # +/-2% = +/-0.38V, no load to full load (E-1),
+                                  # measured AT THE PDU JACK. The interconnect cable spends
+                                  # ~0.15V of that budget, so trim the setpoint slightly high
+                                  # (~19.1V) rather than dead-on 19.0V.
+  i_out_continuous_a: 7.0         # 133W (E-2)
+  p_out_continuous_w: 133
+  ripple_max_mvpp: 200            # (E-3)
+  efficiency_min: 0.94            # requirement (E-6); design target 0.95
+  f_sw_hz: 250000                 # trades switching loss against inductor size
+  duty_ideal: 0.396
+  inductor:
+    part: Coilcraft XAL1510-223
+    second_source: Wurth 74439370220
+    alternate: Coilcraft XAL1510-153   # revisit only if stage-3 thermals say DCR binds
+    l_uh: 22
+    i_sat_a: 18.7                 # 2.3x the 8.04A peak
+    dcr_mohm: 14.5
+    size_mm: [15.5, 16.5, 10.0]
+  ripple_current_a: 2.09          # derived at 22uH / 250kHz
+  peak_current_a: 8.04
+  current_limit_a: 10.5           # ~1.5x rated, set by the sense resistor (P-4)
+  sense_resistor_mohm: 7
+  telemetry_shunt_mohm: 2
+  input_fuse_a: 5                 # fast-blow; coordinates with the crowbar
+  output_tvs_standoff_v: 24
+
+# -----------------------------------------------------------------------------
+# Protection. P-1/P-2: this must work with the MCU unpowered AND with the
+# high-side FET shorted. That is what the crowbar is for.
+# -----------------------------------------------------------------------------
+protection:
+  ovp_trip_v: 21.5                # >19V+10% (no nuisance trips) and <~25V (node input rating)
+  ovp_independent_of_mcu: true    # own reference, powered from the channel's own output
+  crowbar: scr
+  crowbar_clamp_v: 1.5            # SCR forward drop -- what the node sees during a fault
+  fail_on: true                   # UVLO held enabled by a divider; MCU disables via open-drain
+  # HARD RULE: no firmware path may turn an output off autonomously. The watchdog
+  # resets the MCU; it never disables outputs. See firmware/saturn-pdu.yaml.
+  bleed_resistor_per_output: true # P-9: a commanded power cycle must actually discharge
+
+  # P-12 -- dangling live output detection.
+  # An energised port drawing no current has nothing connected to it, which means a
+  # live barrel plug is loose somewhere. 19V is ES1 (no shock hazard, IEC 62368-1) but
+  # a shorted plug tip delivers ~200W into a pinhead contact. See docs/safety.md.
+  #
+  # It ALERTS. It does NOT switch off. A bad shunt reading must never be able to
+  # de-energise a running node -- that is the S-4 hard rule and this does not get an
+  # exception to it.
+  unconnected_output_alert:
+    enabled: true
+    current_threshold_a: 0.02     # a soft-off MS-01 still draws standby current for WoL;
+                                  # a truly empty port reads essentially zero
+    debounce_s: 30                # long: this is an advisory, not a fast trip
+    action: alert_only            # display + log + /metrics. Never switches an output.
+
+# -----------------------------------------------------------------------------
+# Thermal and acoustic
+# -----------------------------------------------------------------------------
+thermal:
+  ambient_design_c: 35
+  derate_fraction: 0.80           # no component above 80% of its rated maximum (T-2)
+  chassis_dissipation_w: 38       # buck losses (~36W) + control (~2W); excludes the PSU's own
+  target_rise_c: 15
+  airflow_required_lps: 2.1       # = 38 / (1.2 * 1005 * 15)
+  airflow_required_cfm: 4.5
+  fan_model: Noctua NF-A4x20 PWM
+  fan_count: 3
+  fan_cfm_each: 9.4
+  noise_target_dba_idle: 35
+  fan_control: ntc_driven         # T-4, with tach feedback for T-5
+
+# -----------------------------------------------------------------------------
+# Mechanical. Height is the binding axis, not depth.
+# -----------------------------------------------------------------------------
+chassis:
+  rack_inches: 19
+  u_height: 1
+  width_overall_mm: 483.2
+  width_internal_mm: 438.7
+  height_max_mm: 44.45
+  height_internal_mm: 43.0
+  depth_mm: 213.0
+  component_height_max_mm: 40     # (M-6) 41mm PSU in a 43mm envelope
+  print_bed_max_mm: 220           # (M-5) keeps panels home-printable
+  board_mount_hole_mm: 3.0        # NPTH, 4x -- inherited from upstream
+  # Dimensioned for the LARGER unit so the RSP-1000-48 drops in (M-2)
+  psu_envelope:
+    rsp_750_mm: [250, 127, 41]
+    rsp_1000_mm: [295, 127, 41]
+    design_to: rsp_1000_mm
+    orientation: long_axis_across_rack_width
+
+panels:
+  rear: [barrel_jack_x6, iec_inlet_fused, rj45]
+  front: [latching_button, status_led_x6, display]
+  usable_window_height_mm: 38     # what is left of 1U after ears, folds and margin
+
+# -----------------------------------------------------------------------------
+# Front-panel display. Runs as a SEPARATE device from the controller:
+# its display bus eats ~15 GPIO, and F-9 requires that a crashed display
+# cannot affect power delivery. It is a read-mostly UART client.
+# -----------------------------------------------------------------------------
+display:
+  module: LILYGO T-Display-S3 Touch
+  controller_ic: ST7789
+  touch_ic: CST816
+  resolution: [320, 170]          # landscape: one wide row per node
+  diagonal_in: 1.9
+  module_size_mm: [60.8, 25.5]
+  separate_device: true           # F-9
+  power_rail: psu_aux_12v
+  link: uart
+  # F-9: a single tap can never de-energise anything.
+  power_action_requires: select_then_hold
+  confirm_hold_ms: 2000
+  idle_timeout_s: 60              # returns to the read-only aggregate view
+
+# -----------------------------------------------------------------------------
+# Control and connectivity
+# -----------------------------------------------------------------------------
+control:
+  mcu: ESP32-S3
+  ethernet: W5500                 # wired, not WiFi (S-1)
+  firmware: esphome
+  metering_ic: INA226
+  metering_count: 6
+  i2c_addresses: 6                # A0/A1 give 16; no multiplexer needed
+  metrics_path: /metrics          # Prometheus-compatible (S-3)
+  ota: true
+  mqtt: optional
