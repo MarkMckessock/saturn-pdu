@@ -32,8 +32,9 @@ regulation loop (P-1).
 
 | Parameter | Value | Why |
 |---|---|---|
-| Trip point | **~21.5V** | Above 19V + 10% so load-step overshoot does not nuisance-trip; well below the ~25V typical rating of a laptop-style DC input stage |
+| Trip point | **21.66V** (2.495V × (1 + 76.8k/10k), 0.1% divider, 1nF filter) | Above 19V + 10% so load-step overshoot does not nuisance-trip; well below the ~25V typical rating of a laptop-style DC input stage |
 | Action | Fires an **SCR across the 19V output** | A crowbar shorts the output. It does not try to open a switch, because the switch is what failed |
+| Circuit | TL431B → MMBTA56 PNP → BT151 gate (deviations.md D-12) | The PNP keeps the TL431 anode at ground, so the trip point is exact |
 | Node sees | ~1.5V (SCR forward drop) | Regardless of what the buck stage is doing |
 | Isolation | Fault current flows through the channel's **5A fast-blow 48V input fuse** until it clears | The crowbar protects; the fuse isolates |
 
@@ -130,8 +131,10 @@ Severity: **C**atastrophic (destroys a node) · **M**ajor (cluster outage) ·
 - **Rows 10 and 11 are accepted, not mitigated.** A single PSU and a single
   backplane mean a single PDU is a single point of failure for the whole cluster.
   This was analysed and chosen (§4.2.4). It should not come as a surprise later.
-- **Row 9 is a live action item** — the NTC sense direction must be verified to
-  fail hot, not cold. Easy to get backwards, and backwards is silent.
+- **Row 9 is resolved in firmware, not hardware** (deviations.md D-14). An open
+  NTC reads cold however it is wired, so firmware must treat any out-of-range
+  reading as a fault: fans to 100% and an alert. WP-6 must implement it, and the
+  bench test is to unplug the NTC and watch the fans go to full.
 
 ## 5. Verification
 

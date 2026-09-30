@@ -30,16 +30,17 @@ be repeated.
 | OVP reference | TI **TL431B** (not TLV431 — §4) | `Reference_Voltage:TL431DBZ` | `Package_TO_SOT_SMD:SOT-23` | both stock (§3.3) |
 | Crowbar SCR | BT151-500R | `Device:Q_SCR_KAG` | `Package_TO_SOT_THT:TO-220-3_Horizontal_TabDown` | both stock (§3.4) |
 | Channel enable FET | 2N7002 | `Transistor_FET:2N7002` | `Package_TO_SOT_SMD:SOT-23` | both stock |
-| Current sense / shunt | 7 mΩ, 2 mΩ | `Device:R_Shunt` | `Resistor_SMD:R_2512_6332Metric` | both stock |
-| TVS | SMCJ58A (bus), SMCJ22A (output) | `Device:D_TVS` | `Diode_SMD:D_SMC` | both stock |
-| Channel input fuse | 5 A, 48 V DC rated | `Device:Fuse` | **not yet chosen** | resolved at WP-4b |
-| Board thermal sensor | 10 k NTC | `Device:Thermistor_NTC` | `Resistor_SMD:R_0805_2012Metric` | both stock |
-| Board-to-backplane connector | not yet chosen | — | — | resolved at WP-4b |
+| Current sense / shunt | 7 mΩ, 2 mΩ | `Device:R` (Kelvin connections made in layout) | `Resistor_SMD:R_2512_6332Metric` | both stock |
+| TVS | SMCJ58A (bus), SMCJ22A (output) | `Device:D_Zener` — `D_TVS` is the bidirectional symbol and these parts are unidirectional | `Diode_SMD:D_SMC` | both stock |
+| Channel input fuse | Littelfuse Nano2 453 series, 5 A | `Device:Fuse` | `Fuse:Fuse_Littelfuse-NANO2-451_453` | both stock |
+| Board thermal sensor | 10 k NTC | `Device:Thermistor_NTC` | `Resistor_SMD:R_0603_1608Metric` | both stock |
+| OVP gate-drive PNP | MMBTA56 (80 V) | `Transistor_BJT:MMBTA56` | `Package_TO_SOT_SMD:SOT-23` | both stock (deviations.md D-12) |
+| Bootstrap / CFT diode | BAS316 | `Diode:BAS316` | `Diode_SMD:D_SOD-323` | both stock. Chosen over BAS16 because the stock SOT-23 BAS16 pinning does not match `Device:D` |
+| Power board connectors | Mini-Fit Jr 2×2 (48 V in), 2×4 (outputs); 2×6 2.54 mm box header (signals) | `Connector_Generic:Conn_02x0N_Odd_Even` | `Connector_Molex:Molex_Mini-Fit_Jr_5566-0{4,8}A…`, `Connector_IDC:IDC-Header_2x06_P2.54mm_Vertical` | both stock (deviations.md D-11) |
 
-Two rows are deliberately open. The fuse needs a part with a **DC** interrupt rating at
-48 V — most small SMD fuses are specified for AC or for 32 V DC, and a fuse that cannot
-break 48 V DC is worse than no fuse because it arcs. That is a selection problem, not a
-library problem, and it belongs with the protection design in WP-4b.
+The two rows left open at WP-4a (fuse and board connector) were closed at WP-4b. The
+fuse was the one that mattered: it needs a **DC** interrupt rating at 48 V, because a
+fuse that cannot break 48 V DC arcs instead of opening.
 
 ---
 
