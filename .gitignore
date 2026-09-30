@@ -34,3 +34,6 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# KiCad 10 local file history (a nested git repo per project)
+.history/
