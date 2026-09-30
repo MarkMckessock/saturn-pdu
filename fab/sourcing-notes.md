@@ -57,6 +57,14 @@ availability and a bounded worst case, not the 0.8W.
 
 Recorded as **D-8** in `deviations.md`.
 
+> **Superseded at WP-4b — see D-10.** The table above compares R_ds(on) and never checked
+> the LM5116's start-up rule: the controller's VCC regulator is only guaranteed to 15mA and
+> must supply (Q_g,HS + Q_g,LS) × f_sw. The BSC0702LS pair at 7.4V is ~68nC → ~17mA at
+> 250kHz, which fails. **Fitted instead: TI CSD18563Q5A** — Q_g 15nC typ / 20nC max at 10V,
+> so ~7.5mA per pair; R_ds(on) 6.8mΩ max at 10V, 10.8mΩ at 4.5V. LCSC (C77239) is out of
+> stock; Mouser listed 7,364 at $1.23 @ 10 and DigiKey 236 on 2026-09-30. Second source:
+> Infineon BSC094N06LS5 (TDSON-8, would need the stock `TDSON-8-1` footprint instead).
+
 ### 1.2 The inductor's ratings were misread — but the choice holds
 
 `SPECIFICATION.md` §4.3.2.1 records the XAL1510-223 as "I_sat 18.7A, DCR 14.5mΩ".
@@ -170,13 +178,13 @@ Replaces `SPECIFICATION.md` §5.
 
 | | Cost |
 |---|---|
-| 6 buck channels (silicon, magnetics, protection, passives) | $128 |
+| 6 buck channels (silicon, magnetics, protection, passives) | $126 |
 | 3× 2-channel PCBs, 4-layer | $20 |
 | Control board | $31 |
 | T-Display-S3 Touch | $25 |
 | Backplane + bus fuse | $28 |
 | PCBA setup and assembly | $120 |
-| **Electronics** | **$372** |
+| **Electronics** | **$370** |
 | Mean Well RSP-1000-48 | $268 |
 | 3× Noctua NF-A4x20 PWM | $45 |
 | IEC inlet, latching button, PSU mating connector | $18 |
@@ -184,9 +192,9 @@ Replaces `SPECIFICATION.md` §5.
 | Sheet metal, printed panels, fasteners, bus wiring | $135 |
 | **Chassis and power** | **$496** |
 | Output board (6× jacks + TVS + PCB) | $20 |
-| **Build cost, one unit** | **$939** |
+| **Build cost, one unit** | **$937** |
 | LM5116 evaluation board (one-off, R-0 control 2) | $136 |
-| **First unit, all in** | **$1,076** |
+| **First unit, all in** | **$1,074** |
 
 **Plus board re-spins.** R-2 says budget three, at $30–80 and 2–3 weeks each: **add
 $150–250.** A realistic first-unit figure is **$1,200–1,330.**

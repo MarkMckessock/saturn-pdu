@@ -24,9 +24,9 @@ be repeated.
 | Function | Part | Symbol | Footprint | Source |
 |---|---|---|---|---|
 | Buck controller | LM5116MH | `saturn-pdu:LM5116` | `Package_SO:ETSSOP-20-1EP_4.4x6.5mm_P0.65mm_EP3x4.2mm` | **symbol authored**, footprint stock (§2.1, §3.1) |
-| High- and low-side FET | Infineon BSC0702LS | `Transistor_FET:Q_NMOS_SSSGD_AvalancheRated` | `Package_TO_SOT_SMD:TDSON-8-1` | both stock (§3.2) |
+| High- and low-side FET | TI **CSD18563Q5A** (not BSC0702LS — D-10) | `Transistor_FET:CSD18563Q5A` | `saturn-pdu:TI_VSONP-8_5x6mm_P1.27mm` | symbol stock, **footprint derived** (§3.2) |
 | Output inductor | Coilcraft XAL1510-223MEB | `saturn-pdu:L_XAL1510-223MEB` | `saturn-pdu:L_Coilcraft_XAL1510` | **both authored** (§2.2) |
-| Telemetry | TI INA226 | `Sensor_Energy:INA226` | `Package_SO:TSSOP-10_3x3mm_P0.5mm` | both stock |
+| Telemetry | TI INA226 (DGS) | `Sensor_Energy:INA226` | `Package_SO:TSSOP-10_3x3mm_P0.5mm` | both stock — this footprint is TI's DGS0010A (VSSOP-10); KiCad names it TSSOP |
 | OVP reference | TI **TL431B** (not TLV431 — §4) | `Reference_Voltage:TL431DBZ` | `Package_TO_SOT_SMD:SOT-23` | both stock (§3.3) |
 | Crowbar SCR | BT151-500R | `Device:Q_SCR_KAG` | `Package_TO_SOT_THT:TO-220-3_Horizontal_TabDown` | both stock (§3.4) |
 | Channel enable FET | 2N7002 | `Transistor_FET:2N7002` | `Package_TO_SOT_SMD:SOT-23` | both stock |
@@ -108,32 +108,32 @@ uses a slightly larger, solder-mask-defined 3.15 × 4.35 mm thermal pad; the 0.1
 difference is immaterial for a controller dissipating a fraction of a watt, and the
 IPC-derived stock footprint is the more widely-proven geometry.
 
-### 3.2 `Package_TO_SOT_SMD:TDSON-8-1` — BSC0702LS
+### 3.2 `saturn-pdu:TI_VSONP-8_5x6mm_P1.27mm` — CSD18563Q5A
 
-Checked pad-by-pad against **Infineon BSC0702LS rev 2.5 (2021-04-06), Figure 2,
-"PG-TDSON-8: Recommended Boardpads & Apertures"**. KiCad's footprint is rotated 90°
-relative to Infineon's drawing; comparing like for like:
+**Why the FET changed.** WP-3 fitted the Infineon BSC0702LS. At WP-4b the LM5116 start-up
+rule was checked: its VCC regulator is guaranteed to only 15 mA, and must supply
+(Q_g,HS + Q_g,LS) × f_sw. The BSC0702LS pair is ~68 nC at 7.4 V → ~17 mA at 250 kHz, which
+fails. CSD18563Q5A (TI SLPS444C): Q_g 7.3/9.5 nC at 4.5 V and 15/20 nC at 10 V (typ/max),
+so ~7.5 mA per pair. Recorded as D-10.
 
-| | Infineon | KiCad `TDSON-8-1` |
-|---|---|---|
-| Lead pads | 0.5 × 0.925 mm, pitch 1.27 mm | 0.5 × 0.85 mm, pitch 1.27 mm |
-| Lead pad outer edge | 3.325 mm from centre | 3.325 mm from centre |
-| Drain pad | 4.41 × 4.455 mm | 4.41 × 4.55 mm |
-| Drain pad outer edge | 3.325 mm from centre | 3.325 mm from centre |
-| Drain-to-lead gap | 1.27 mm | 1.25 mm |
-| Stencil | 4-window pane on the drain pad | 12 paste sub-pads, window-paned |
+**Why a derived footprint.** KiCad's `CSD18563Q5A` symbol defaults to
+`Package_TO_SOT_SMD:TDSON-8-1`, which is Infineon's pattern, **not TI's**: drain-to-lead gap
+1.25 mm vs TI's ~0.55 mm, overall span 6.65 mm vs 6.25 mm. KiCad's
+`Package_SON:VSONP-8-1EP_5x6_P1.27mm` *does* match TI's recommended land pattern — leads
+0.7 × 0.7 mm at x = ±2.8 mm, main drain pad 4.35 × 4.51 mm at x = +0.33 mm, four paste-only
+window-pane apertures — but numbers its pads 1 = S, 2 = G, 3 = D, which does not match the
+symbol (1–3 S, 4 G, 5 D).
 
-Largest disagreement is 0.095 mm, and the outer extents — the ones that set the solder
-fillet and the footprint's true size — match exactly. **Adopted without modification.**
+The project copy is that footprint with **only the pad numbers changed**: the four left
+leads, top to bottom, become 1, 2, 3, 4; the main pad and the four right leads all become 5.
+Geometry, courtyard, silkscreen and 3D model are untouched. It is a derivative of the KiCad
+library and carries its **CC-BY-SA 4.0** licence (with KiCad's library exception).
 
-One thing to know when reading the netlist: the datasheet numbers the drain as pins 5–8,
-but KiCad merges them into a single pad numbered **5**, and the matching symbol
-`Q_NMOS_SSSGD_AvalancheRated` has a single drain pin **5**. Symbol and footprint are
-internally consistent, so nothing is lost — but a cross-reference against the datasheet
-pin list will not line up, and that is expected rather than an error.
+When assigning in the schematic, override the symbol's default footprint — leaving
+`TDSON-8-1` in place would be a silent, board-killing error.
 
-Confirmed from the same datasheet: V_DS 60 V, **R_DS(on) max 2.7 mΩ**, I_D 134 A,
-**Q_G(0–4.5 V) 24 nC**, Q_oss 43 nC, logic-level, 100 % avalanche tested.
+The superseded BSC0702LS check (Infineon rev 2.5 against `TDSON-8-1`) remains valid if the
+second source, Infineon BSC094N06LS5 (also PG-TDSON-8), is ever fitted.
 
 ### 3.3 `Reference_Voltage:TL431DBZ` — TL431B
 

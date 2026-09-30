@@ -450,6 +450,13 @@ the LM5116 drives its gates from a 7.4V rail rather than 10V:
 > and — the reason that actually matters — **characterised at V_gs = 4.5V as well as 10V**,
 > so its worst case at the LM5116's 7.4V drive is bounded rather than estimated. Recorded
 > as D-8; full comparison in `fab/sourcing-notes.md` §1.1.
+>
+> **Superseded at WP-4b (D-10).** The BSC0702LS's gate charge (~68nC per HS+LS pair at
+> 7.4V) draws ~17mA from the LM5116's VCC regulator at 250kHz, above its guaranteed 15mA
+> — start-up would not be guaranteed. Replaced by **TI CSD18563Q5A** (≤20nC each, ~7.5mA
+> per pair). The conduction figures below were computed for the BSC0702LS; with the
+> CSD18563Q5A they rise by ~0.3W per channel, while switching loss — still the dominant
+> term — falls.
 
 | Loss | Value | Derivation |
 |---|---|---|
@@ -801,23 +808,23 @@ it is still the right trade (§4.3.2.1).
 
 | Item | Cost |
 |---|---|
-| 6 buck channels | $128 |
+| 6 buck channels | $126 |
 | 3× 4-layer 2-channel PCBs | $20 |
 | Output board — 6× jacks, TVS, PCB (§4.8) | $20 |
 | Control board | $31 |
 | T-Display-S3 Touch display (F-8) | $25 |
 | Backplane + 20A bus fuse | $28 |
 | PCBA setup + assembly | $120 |
-| **Electronics** | **$372** |
+| **Electronics** | **$370** |
 | Mean Well RSP-1000-48 | $268 |
 | 3× Noctua NF-A4x20 PWM | $45 |
 | IEC inlet, latching button, PSU mating connector | $18 |
 | 6× 18AWG interconnect cables (§4.8.1) | $30 |
 | Sheet metal, printed panels, fasteners, bus wiring | $135 |
 | **Chassis and power** | **$496** |
-| **Build cost, one unit** | **$939** |
+| **Build cost, one unit** | **$937** |
 | LM5116 evaluation board — one-off, R-0 control 2 | $136 |
-| **First unit, all in** | **$1,076** |
+| **First unit, all in** | **$1,074** |
 
 **Excludes prototype iterations, and R-2 says budget three board spins** — add ~$150–250
 and several weeks. A realistic all-in first-unit figure is **$1,200–1,330.**
