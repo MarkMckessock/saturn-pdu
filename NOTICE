@@ -39,7 +39,6 @@ USB-C PD module, the PD-specific board and the 24V rail are discarded.
 | Element | How it is used |
 |---|---|
 | 19" chassis geometry (`.stp` B-rep solids) | Dimensional reference, `reference/upstream-19in/` |
-| 4x 3.0mm NPTH board mounting pattern | Inherited directly |
 | Per-channel fuse + TVS + bulk capacitor pattern | Inherited, rescaled (3A -> 5A; TVS standoff 26V -> 58V bus / 24V output) |
 | Master switch via front-panel latching button | Concept inherited; implementation changed -- see below |
 | Fan rail derived from the switched main rail | Inherited, with MCU PWM control added |
@@ -69,11 +68,12 @@ USB-C PD module, the PD-specific board and the 24V rail are discarded.
 ## On editable source
 
 CERN-OHL-S v2 requires the **Source** -- the preferred form for making
-modifications. A census of all 149 files in upstream at the time of forking
-found no `.kicad_*`, `.f3d`, `.FCStd` or `.SLDPRT` files: only STEP/STL
-exports, Gerbers, ODB++ and PDFs. STEP headers show SolidWorks 2025; Gerber
-headers show KiCad 9.0.7, project "1U Minilab PSU V2". Both originals are
-withheld.
+modifications. Upstream's current tree holds only exports (STEP/STL,
+Gerbers, ODB++, PDFs), but its KiCad project and SolidWorks parts were
+committed in December 2025 and removed from the tree in February 2026 (commit
+724920b). They remain in the git history this fork carries. An earlier version
+of this notice said the originals were withheld; that was wrong, and was
+corrected on 2026-09-30.
 
 Exports are not Source. This derivative publishes the KiCad projects and the
 parametric FreeCAD scripts, and treats the generated STEP/STL/Gerber files as

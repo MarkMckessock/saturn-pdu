@@ -38,10 +38,11 @@ determine how much can be inherited:
    [cannot be powered over USB-C](https://www.galaxus.at/en/s1/questionandanswer/hello-can-the-mini-pc-also-be-supplied-with-power-via-usb-c-or-is-it-only-possible-with-the-mains-ad-782803);
    Minisforum support confirms the barrel jack is required. Every USB-C PD module, the
    PD-specific board and the 24V rail are discarded.
-2. **Upstream publishes no editable source.** A census of all 149 files found zero
-   `.kicad_*`, `.f3d`, `.FCStd`, `.SLDPRT` or EasyEDA files — only STEP/STL exports,
-   Gerbers, ODB++ and PDFs. STEP headers show SolidWorks 2025; Gerber headers show
-   KiCad 9.0.7 (project `1U Minilab PSU V2`). Both originals are withheld.
+2. **Upstream's editable source exists only in its git history.** _Corrected at WP-4c:_
+   the original census checked only the current tree and wrongly concluded the originals
+   were withheld. The KiCad project and SolidWorks parts were committed in December 2025
+   and removed from the tree in February 2026; they remain in history under CERN-OHL-S
+   (docs/upstream-analysis.md §1).
 
 This is therefore a **new design that inherits upstream's mechanical architecture and
 protection patterns**, not a modification of upstream's electronics. See §2.
@@ -58,7 +59,7 @@ protection patterns**, not a modification of upstream's electronics. See §2.
 | Stackup | 2-layer, 1.6mm, 2oz | README; confirmed by pour-heavy layout |
 | Trace apertures | 0.8 / 1.0 / **2.0 mm max** | `F_Cu.gtl` aperture list |
 | Copper pours | 17 regions top, 1 bottom (GND plane) | `G36` region count |
-| Drills | 0.6 / 0.75 / 1.0 / 1.8 / 3.2 mm PTH; **3.0 mm NPTH ×4** mounting | `.drl` tool tables |
+| Drills | 0.6 / 0.75 / 1.0 / 1.8 / 3.2 mm PTH; 3.0 mm NPTH ×4 — **connector pegs, not mounting holes** (corrected at WP-4c) | `.drl` tool tables |
 
 ### 2.2 Reconstructed topology
 
@@ -90,7 +91,7 @@ and one purchased buck module. This design inverts that — conversion *is* the 
 | Fuse + TVS + bulk cap per channel | **Inherit**, rescaled | Sound pattern; 3A→5A input fuse, TVS standoff 26V→58V (bus) / 24V (output) |
 | Master switch via latching button | **Inherit concept, change implementation** | Use the PSU's remote ON/OFF rather than commutating 15A of 48V through a FET — an option upstream did not have with the HRP-300 |
 | Fan rail from switched main rail | **Inherit**, add MCU PWM | Upstream tunes RPM by trimming a buck's output voltage; open-loop and crude |
-| 4× 3.0mm NPTH mounting pattern | **Inherit** | Compatible with upstream's PCB tray / reinforcement bracket concept |
+| ~~4× 3.0mm NPTH mounting pattern~~ | **None exists** | Those holes are Mini-Fit Jr pegs. Power boards use 4× M3, 4 mm from each corner |
 | 90×130mm board footprint | **Reference only** | Useful sanity check that a 2-channel board fits the tray |
 | Power path, PD modules, 24V rail | **Discard** | Incompatible with the load |
 | 2-layer / 2oz / 15A | **Discard** | Under-specified for 800W class |
@@ -205,7 +206,7 @@ Priority: **M** mandatory · **S** should · **C** could.
 |---|---|---|---|
 | L-1 | M | Licensed CERN-OHL-S v2 | Upstream is strongly reciprocal; not optional |
 | L-2 | M | Modifications documented relative to upstream | CERN-OHL-S §3.3 |
-| L-3 | M | **Publish editable source** (KiCad projects, FreeCAD models), not only exports | The licence requires the preferred form for modification — upstream arguably fails this; this derivative should not |
+| L-3 | M | **Publish editable source** (KiCad projects, FreeCAD models), not only exports | The licence requires the preferred form for modification — upstream keeps it only in git history; this derivative keeps it in the tree |
 | L-4 | M | ShrikeLab name and logo not carried into this derivative | CERN-OHL-S §7 grants no trademark rights |
 
 ---
@@ -725,7 +726,7 @@ is NTC-driven (T-4) with tach feedback (T-5), which also serves T-3 — at clust
 - Envelope: 483.2mm across ears, 438.7mm internal, ~43mm height, ~213mm depth.
 - **Rear panel:** 6× barrel jacks, IEC inlet (fused), RJ45.
 - **Front panel:** latching button, 6 status LEDs.
-- Board mounting inherits upstream's 4× 3.0mm NPTH pattern.
+- Power boards mount on 4× M3 holes, 4 mm in from each corner of the 90 × 130 mm outline (upstream has no mounting holes to inherit — corrected at WP-4c).
 
 **[OPEN-5] The barrel jack size is unverified.** Web sources do not state it reliably;
 it is most likely 5.5×2.5mm centre-positive. **Measure a stock MS-01 plug with calipers
@@ -1329,7 +1330,7 @@ FreeCAD is not installed, but the model is authored as **parametric Python** tha
 - `cad/chassis.py` — 1U enclosure, dimensioned for the **RSP-1000-48** (M-2)
 - `cad/panel_front.py` — display window (60.8 × 25.5mm), button, 6 LEDs
 - `cad/panel_rear.py` — 6× barrel jack cutouts, IEC inlet, RJ45
-- `cad/trays.py` — PSU mount, 3× board trays on the inherited 4× 3.0mm NPTH pattern
+- `cad/trays.py` — PSU mount, 3× board trays on the 4× M3 pattern (4 mm corner inset)
 - STEP and STL exports committed alongside the scripts (L-3 satisfied by the scripts, not
   the exports)
 

@@ -1,0 +1,15 @@
+(version 1)
+
+# 48 V spacing. IPC-2221B needs only 0.13 mm for 31-150 V on masked outer
+# copper, so the netclass clearance of 0.2 mm already satisfies the standard.
+# This rule adds margin wherever the layout has a choice, i.e. everything
+# except pad-to-pad gaps, which the IC footprints fix (LM5116 pitch 0.65 mm).
+(rule "48V domain to low-voltage copper"
+  (condition "A.hasNetclass('HV') && !B.hasNetclass('HV') && !(A.Type == 'Pad' && B.Type == 'Pad')")
+  (constraint clearance (min 0.5mm)))
+
+# The switch node swings 0-48 V at 250 kHz: keep it off the INA226 / OVP
+# sense and the I2C lines, which is where coupled noise would do harm.
+(rule "Switch node to sense and I2C"
+  (condition "A.NetName == '/CH*/SW' && (B.NetName == '/CH*/FB' || B.NetName == '/CH*/OVP_REF' || B.NetName == '/SDA' || B.NetName == '/SCL' || B.NetName == '/CH*/CS' || B.NetName == '/CH*/CSG')")
+  (constraint clearance (min 1.0mm)))

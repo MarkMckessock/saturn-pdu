@@ -119,4 +119,4 @@ welcome -- particularly from anyone with power-electronics experience, given
 R-0. Pull requests are not expected.
 
 Derivatives must remain under CERN-OHL-S v2 and must publish editable source,
-not only exports. Upstream arguably does not; this repository tries to.
+not only exports. Upstream's source is in its git history; this repository keeps it in the tree.

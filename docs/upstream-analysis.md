@@ -21,17 +21,19 @@ Two facts, established before any design work:
 Minisforum support confirms the barrel jack is required. Every USB-C PD module,
 the PD-specific board and the 24V rail are therefore useless here.
 
-**2. Upstream publishes no editable source.** A census of all 149 files found
-zero `.kicad_*`, `.f3d`, `.FCStd`, `.SLDPRT` or EasyEDA files — only STEP/STL
-exports, Gerbers, ODB++ and PDFs. STEP headers show SolidWorks 2025; Gerber
-headers show KiCad 9.0.7, project `1U Minilab PSU V2`. Both originals are
-withheld.
+**2. Upstream's editable source is in its git history, not its current tree.**
+_Corrected at WP-4c (2026-09-30)._ The original census looked only at the 149
+files in the current tree, found no `.kicad_*` or `.SLDPRT` files, and concluded
+the originals were withheld. **That was wrong.** Upstream committed its KiCad
+project (`1U Minilab PSU V2.kicad_sch` / `.kicad_pcb`, commit `8633736`,
+2025-12-24) and SolidWorks parts (`CAD/*.SLDPRT`), then removed them from the
+tree in `724920b` (2026-02-23). They remain in the history this fork carries,
+under CERN-OHL-S v2. Upstream therefore did publish Source.
 
-CERN-OHL-S v2 requires the **Source** — "the preferred form for making
-modifications". Exports are not that. This is noted without hostility: it is a
-generously shared project. But it means anything inherited had to be
-reverse-engineered from fabrication outputs, and it is why `L-3` exists as a
-requirement on *this* project.
+The reverse-engineering below was done from fabrication outputs before this was
+found. Where the KiCad source has since been checked, it agrees (Q1 in §5 is
+`IRF9540NPBF`, P-channel, in upstream's own schematic) — with one exception, the
+mounting holes, corrected in the table below.
 
 ## 2. What was extracted, and from where
 
@@ -42,7 +44,7 @@ requirement on *this* project.
 | Trace apertures | 0.8 / 1.0 / **2.0 mm max** | `F_Cu.gtl` | Aperture definition list |
 | Copper pours | 17 regions top, 1 bottom (GND plane) | `F_Cu.gtl`, `B_Cu.gbl` | `G36` region count |
 | Drill sizes | 0.6 / 0.75 / 1.0 / 1.8 / 3.2 mm PTH | `.drl` | Tool tables |
-| Mounting holes | **3.0 mm NPTH × 4** | `.drl` | Tool tables |
+| Mounting holes | ~~3.0 mm NPTH × 4~~ **None.** The four 3.0 mm NPTH are the locating-peg holes of the two Mini-Fit Jr connectors J1/J2 (two each), confirmed in upstream's `.kicad_pcb` | `.drl` | Tool tables — misread; corrected at WP-4c |
 | Through-hole netlist | Complete | `HomeLab-PSU-V1_netlist.ipc` | IPC-D-356 parse |
 | Part values | Complete | `bom.csv`, `README.md` | Direct |
 
@@ -77,7 +79,7 @@ is why the schematic could not be inherited even in outline.
 | Fuse + TVS + bulk cap per channel | **Inherit**, rescaled | Sound pattern. 3A → 5A input fuse; TVS standoff 26V → 58V (bus) / 24V (output) |
 | Master switch via latching button | **Inherit the concept, change the implementation** | Drive the PSU's remote ON/OFF rather than commutating 15A of 48V through a FET — an option upstream did not have with the HRP-300 |
 | Fan rail from the switched main rail | **Inherit**, add MCU PWM | Upstream tunes RPM by trimming a buck module's output voltage: open-loop and crude |
-| 4 × 3.0mm NPTH mounting pattern | **Inherit** | Compatible with upstream's PCB tray and reinforcement bracket |
+| ~~4 × 3.0mm NPTH mounting pattern~~ | **Nothing to inherit** — see the correction in §2. saturn-pdu-2ch uses 4 × M3 holes 4 mm in from each corner | — |
 | 90 × 130mm board footprint | **Reference only** | A useful sanity check that a 2-channel board fits the tray |
 | 19" chassis geometry (`.stp`) | **Inherit as dimensional reference** | True B-rep solids, dimensionally trustworthy — unlike the mesh-only printed parts |
 | Power path, PD modules, 24V rail | **Discard** | Incompatible with the load |
@@ -119,3 +121,7 @@ pull-up-and-pull-low topology, which the part values establish on their own. But
 it is an inference and it is labelled as one.
 
 Neither gap is material, because the power path is not being copied.
+
+> **Both gaps are closable** now that upstream's KiCad schematic has been found
+> in its git history (§1): `git show 724920b^:"PCB/1U Minilab PSU V2/1U Minilab PSU V2.kicad_sch"`.
+> They have not been re-worked, because nothing in this design depends on them.
